@@ -38,11 +38,14 @@ export default async function BoardPage({ params }: BoardPageProps) {
 
   if (!isOwner && !isMember) redirect('/dashboard')
 
+  const canEdit = isOwner || (board.board_members ?? []).some(
+    (m: any) => m.user_id === user.id && m.role !== 'viewer'
+  )
+
   return (
     <BoardContent
       board={board}
-      currentUserId={user.id}
-      currentUserEmail={user.email ?? ''}
+      canEdit={canEdit}
     />
   )
 }
