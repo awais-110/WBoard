@@ -1,52 +1,27 @@
-
+import LandingNavbar from '@/components/landing/LandingNavbar'
+import LandingContent from '@/components/landing/LandingContent'
 import { createClient } from '@/lib/supabase/server'
-import { redirect, notFound } from 'next/navigation'
-import BoardContent from '@/components/board/BoardContent'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
-interface BoardPageProps {
-  params: { boardId: string }
+export const metadata = {
+  title: 'IdeaSpace - Collaborate, Create, Innovate',
+  description: 'IdeaSpace is your digital canvas for collaborative creativity. Design, brainstorm, and build amazing things together in real-time.',
 }
 
-export async function generateMetadata() {
-  return {
-    title: 'Board - IdeaSpace',
-    description: 'Collaborative whiteboard',
-  }
-}
-
-export default async function BoardPage({ params }: BoardPageProps) {
+export default async function HomePage() {
+  // Check if user is already logged in
   const supabase = createClient()
-
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data, error } = await supabase
-    .from('boards')
-    .select('*, board_members(*)')
-    .eq('id', params.boardId)
-    .single()
-
-  if (error || !data) notFound()
-
-  const board = data as any
-
-  const isOwner = board.owner_id === user.id
-  const isMember = (board.board_members ?? []).some(
-    (m: any) => m.user_id === user.id
-  )
-
-  if (!isOwner && !isMember) redirect('/dashboard')
-
-  const canEdit = isOwner || (board.board_members ?? []).some(
-    (m: any) => m.user_id === user.id && m.role !== 'viewer'
-  )
+  
+  // Redirect authenticated users to dashboard
+  if (user) {
+    redirect('/dashboard')
+  }
 
   return (
-    <BoardContent
-      board={board}
-      canEdit={canEdit}
-    />
+    <>
+      <LandingNavbar />
+      <LandingContent />
+    </>
   )
 }
