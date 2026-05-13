@@ -49,7 +49,7 @@ export default function TopNavbar({ boardName = 'Untitled Board' }: { boardName?
   }
 
   return (
-    <div className="grid h-12 w-full grid-cols-[1fr_auto_1fr] items-center gap-4 bg-[#0f0f0f] px-4 text-white">
+    <div className="hidden h-12 w-full grid-cols-[1fr_auto_1fr] items-center gap-4 bg-[#0f0f0f] px-4 text-white sm:grid">
       <div className="flex items-center gap-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-sm font-semibold text-white shadow-sm">
           {boardName.charAt(0).toUpperCase()}

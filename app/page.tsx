@@ -4,8 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
 export const metadata = {
-  title: 'IdeaSpace - Collaborate, Create, Innovate',
-  description: 'IdeaSpace is your digital canvas for collaborative creativity. Design, brainstorm, and build amazing things together in real-time.',
+  title: 'IdeaSpace — Modern Collaborative Workspace',
+  description: 'IdeaSpace gives your team a polished canvas for real-time collaboration, creative workflows, and board-driven design.',
 }
 
 export default async function HomePage() {

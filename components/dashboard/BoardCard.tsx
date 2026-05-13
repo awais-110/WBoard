@@ -9,13 +9,24 @@ import type { DashboardBoard } from '@/types/board'
 
 interface BoardCardProps {
   board: DashboardBoard
+  variant?: number
   onDelete?: (id: string) => void
 }
 
-export default function BoardCard({ board, onDelete }: BoardCardProps) {
+const cardVariants = [
+  'border-[#B8EAFF]/40 bg-gradient-to-br from-[#E8FBFF] via-[#DFF7FA] to-[#B8F1EE]',
+  'border-[#FCE1A2]/40 bg-gradient-to-br from-[#fff8e8] via-[#fff3d0] to-[#fae6b8]',
+  'border-[#D9D4FF]/40 bg-gradient-to-br from-[#f3f2ff] via-[#e8e5ff] to-[#dcd8ff]',
+  'border-[#FFD3C6]/40 bg-gradient-to-br from-[#fff2ec] via-[#ffe4d8] to-[#ffd4c6]',
+  'border-[#C8F1EA]/40 bg-gradient-to-br from-[#e9f7f2] via-[#d7eee5] to-[#c8f1ea]',
+  'border-[#E5E4E1]/40 bg-gradient-to-br from-[#f7f6f4] via-[#efede9] to-[#e5e4e1]',
+]
+
+export default function BoardCard({ board, variant = 0, onDelete }: BoardCardProps) {
   const [preview, setPreview] = useState<string | null>(board.thumbnail_url)
   const timeAgo = getTimeAgo(board.updated_at)
   const collaboratorCount = board.members?.length ?? 1
+  const variantClass = cardVariants[variant % cardVariants.length]
 
   useEffect(() => {
     if (board.thumbnail_url || !board.canvas_data?.objects?.length) return
@@ -37,14 +48,14 @@ export default function BoardCard({ board, onDelete }: BoardCardProps) {
 
   return (
     <Link href={`/dashboard/board/${board.id}`} className="group block h-full">
-      <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#00A198]/20 bg-gradient-to-br from-white to-[#E4DDD3]/20 shadow-md shadow-[#00A198]/5 transition duration-300 hover:-translate-y-1 hover:border-[#00A198]/40 hover:shadow-lg hover:shadow-[#00A198]/15">
-        <div className="relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br from-[#E4DDD3]/40 to-[#00A198]/10">
+      <article className={`flex h-full flex-col overflow-hidden rounded-[28px] border shadow-md shadow-[#00A198]/10 transition duration-300 hover:-translate-y-1 hover:shadow-xl ${variantClass}`}>
+        <div className="relative flex h-44 items-center justify-center overflow-hidden bg-white/75">
           {preview ? (
             <Image src={preview} alt={board.title} fill sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw" className="object-cover transition duration-300 group-hover:scale-105" unoptimized />
           ) : (
             <div className="text-center">
-              <div className="mx-auto h-12 w-20 rounded-lg border-2 border-dashed border-[#00A198]/30 bg-white shadow-sm" />
-              <p className="mt-3 text-sm font-semibold text-[#00A198]/60">No preview yet</p>
+              <div className="mx-auto h-16 w-24 rounded-3xl border-2 border-dashed border-[#00A198]/30 bg-white shadow-sm" />
+              <p className="mt-3 text-sm font-semibold text-[#008B7A]/70">No preview yet</p>
             </div>
           )}
           <div className="absolute left-3 top-3 rounded-full border border-[#00A198]/30 bg-white/90 px-3 py-1 text-xs font-bold text-[#008B7A] shadow-sm backdrop-blur-sm">
@@ -59,10 +70,10 @@ export default function BoardCard({ board, onDelete }: BoardCardProps) {
 
         <div className="flex flex-1 flex-col gap-4 p-5">
           <div>
-            <h3 className="truncate text-base font-bold text-[#008B7A] transition-colors group-hover:text-[#00A198]">
+            <h3 className="truncate text-base font-bold text-slate-900 transition-colors group-hover:text-[#0f766e]">
               {board.title}
             </h3>
-            <div className="mt-3 flex items-center gap-4 text-xs text-[#00A198]/60">
+            <div className="mt-3 flex items-center gap-4 text-xs text-slate-600">
               <span className="inline-flex items-center gap-1.5">
                 <Clock3 size={13} />
                 {timeAgo}

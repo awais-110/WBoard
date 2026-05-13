@@ -5,96 +5,118 @@ import { useState } from 'react'
 import { Menu, X } from 'lucide-react'
 
 export default function LandingNavbar() {
-  const [isOpen, setIsOpen] = useState(false)
-
-  const navItems = [
-    { label: 'Features', href: '#features' },
-    { label: 'About', href: '#about' },
-    { label: 'Contact', href: '#contact' },
-  ]
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <nav className="fixed w-full top-0 z-50 bg-gradient-to-b from-black via-black to-transparent backdrop-blur-sm border-b border-the-mint/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-the-mint to-the-mint/60 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-              <span className="text-ice-latte font-bold text-lg">I</span>
-            </div>
-            <span className="text-xl font-bold text-ice-latte hidden sm:inline-block">
-              IdeaSpace
-            </span>
-          </Link>
-
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-8">
-            {navItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className="text-ice-latte/80 hover:text-the-mint transition-colors duration-300 text-sm font-medium"
-              >
-                {item.label}
-              </a>
-            ))}
+    <nav className="fixed inset-x-0 top-0 z-50 border-b border-black/8 bg-[#f7f5f0]/92 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-8 py-5">
+        <Link href="/" className="flex items-center gap-3">
+          <div>
+            {/* <span className="text-lg font-bold text-white" style={{ fontFamily: 'Instrument Serif, serif' }}>
+              I
+            </span> */}
           </div>
+         <div className="flex items-center gap-3">
+  <div style={{
+    width: '38px',
+    height: '38px',
+    background: '#0D0D0D',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    border: '1px solid rgba(0, 0, 0, 0.1)'
+  }}>
+    <svg width="18" height="18" viewBox="0 0 18 18" 
+      fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="2" width="6" height="6" rx="1.5" fill="#0ABFBC"/>
+      <rect x="10" y="2" width="6" height="6" rx="1.5" fill="#F59E0B"/>
+      <rect x="2" y="10" width="6" height="6" rx="1.5" fill="#8B5CF6"/>
+      <rect x="10" y="10" width="6" height="6" rx="1.5" fill="#EC4899"/>
+    </svg>
+  </div>
+  <div className="flex flex-col">
+    <span style={{
+      fontSize: '22px',
+      fontWeight: '600',
+      color: '#0D0D0D',
+      letterSpacing: '-0.03em',
+      lineHeight: '1'
+    }}>
+      IdeaSpace
+    </span>
+    <span style={{
+      fontSize: '10px',
+      color: 'black',
+      letterSpacing: '0.1em',
+      textTransform: 'uppercase' as const,
+      marginTop: '3px'
+    }}>
+      Workspace
+    </span>
+  </div>
+</div>
+        </Link>
 
-          {/* CTA Buttons */}
-          <div className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-ice-latte hover:text-the-mint transition-colors duration-300 text-sm font-medium hidden sm:block"
-            >
-              Sign In
-            </Link>
+        <div className="hidden items-center gap-10 md:flex">
+          <a href="#why" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
+            Why
+          </a>
+          <a href="#canvas" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
+            Canvas
+          </a>
+          <a href="/register" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
+            Start
+          </a>
+        </div>
+
+        <div className="hidden items-center gap-4 md:flex">
+          <Link href="/login" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
+            Sign In
+          </Link>
+          <Link
+            href="/register"
+            className="rounded-full bg-[#0d0d0d] px-5 py-2.5 text-sm font-bold text-[#f7f5f0] shadow-lg transition hover:-translate-y-0.5"
+          >
+            Get Started
+          </Link>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          className="md:hidden text-[#0d0d0d]"
+          aria-label="Toggle navigation"
+        >
+          {menuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {menuOpen && (
+        <div className="border-t border-black/8 bg-[#f7f5f0]/95 px-8 pb-4 md:hidden">
+          <div className="flex flex-col gap-3 pt-4">
+            <a href="#why" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
+              Why
+            </a>
+            <a href="#canvas" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
+              Canvas
+            </a>
             <Link
               href="/register"
-              className="px-6 py-2.5 bg-gradient-to-r from-the-mint to-the-mint/80 text-black font-semibold rounded-lg hover:shadow-lg hover:shadow-the-mint/50 transition-all duration-300 text-sm"
+              className="rounded-2xl bg-[#0d0d0d] px-4 py-3 text-center text-sm font-bold text-[#f7f5f0]"
             >
               Get Started
             </Link>
+            <Link
+              href="/login"
+              className="rounded-2xl border border-black/16 px-4 py-3 text-sm font-medium text-[#0d0d0d] transition hover:border-[#0abfbc] hover:text-[#0abfbc]"
+            >
+              Sign In
+            </Link>
           </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden text-ice-latte hover:text-the-mint transition-colors"
-          >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
         </div>
-
-        {/* Mobile Menu */}
-        {isOpen && (
-          <div className="md:hidden pb-4 border-t border-the-mint/10">
-            {navItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className="block py-3 text-ice-latte/80 hover:text-the-mint transition-colors text-sm font-medium"
-                onClick={() => setIsOpen(false)}
-              >
-                {item.label}
-              </a>
-            ))}
-            <div className="flex gap-2 pt-4">
-              <Link
-                href="/login"
-                className="flex-1 py-2 text-center text-ice-latte border border-ice-latte/30 rounded-lg hover:border-the-mint transition-colors text-sm font-medium"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/register"
-                className="flex-1 py-2 text-center bg-gradient-to-r from-the-mint to-the-mint/80 text-black rounded-lg font-semibold text-sm"
-              >
-                Get Started
-              </Link>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </nav>
   )
 }

@@ -51,6 +51,9 @@ export function useCanvas({
       width: parent?.clientWidth ?? window.innerWidth,
       height: parent?.clientHeight ?? window.innerHeight - 112,
     })
+    canvas.getElement().style.touchAction = 'none'
+    ;(canvas as fabric.Canvas & { upperCanvasEl?: HTMLCanvasElement; wrapperEl?: HTMLDivElement }).upperCanvasEl?.style.setProperty('touch-action', 'none')
+    ;(canvas as fabric.Canvas & { upperCanvasEl?: HTMLCanvasElement; wrapperEl?: HTMLDivElement }).wrapperEl?.style.setProperty('touch-action', 'none')
 
     fabricRef.current = canvas
     ;(window as Window & { __fabric__?: fabric.Canvas }).__fabric__ = canvas
@@ -154,7 +157,7 @@ export function useCanvas({
 
     const onMouseDown = (opt: fabric.IEvent) => {
       if (!canEdit) return
-      const event = opt.e as MouseEvent
+      const point = getClientPoint(opt.e)
       const pointer = canvas.getPointer(opt.e)
       startX = pointer.x
       startY = pointer.y
@@ -171,8 +174,8 @@ export function useCanvas({
 
       if (activeTool === 'pan') {
         isPanning = true
-        lastPanX = event.clientX
-        lastPanY = event.clientY
+        lastPanX = point.x
+        lastPanY = point.y
         canvas.defaultCursor = 'grabbing'
         return
       }
@@ -221,10 +224,10 @@ export function useCanvas({
     }
 
     const onMouseMove = (opt: fabric.IEvent) => {
-      const event = opt.e as MouseEvent
+      const point = getClientPoint(opt.e)
       const pointer = canvas.getPointer(opt.e)
 
-      if (activeTool === 'eraser' && event.buttons === 1) {
+      if (activeTool === 'eraser' && isPrimaryPointerDown(opt.e)) {
         eraseAtPointer(canvas, pointer)
         return
       }
@@ -232,11 +235,11 @@ export function useCanvas({
       if (isPanning) {
         const vpt = canvas.viewportTransform
         if (!vpt) return
-        vpt[4] += event.clientX - lastPanX
-        vpt[5] += event.clientY - lastPanY
+        vpt[4] += point.x - lastPanX
+        vpt[5] += point.y - lastPanY
         canvas.requestRenderAll()
-        lastPanX = event.clientX
-        lastPanY = event.clientY
+        lastPanX = point.x
+        lastPanY = point.y
         return
       }
 
@@ -376,4 +379,26 @@ function eraseAtPointer(canvas: fabric.Canvas, pointer: fabric.Point | { x: numb
 
   canvas.remove(target)
   canvas.requestRenderAll()
+}
+
+function getClientPoint(event: Event) {
+  if (isTouchEvent(event) && event.touches.length > 0) {
+    return { x: event.touches[0].clientX, y: event.touches[0].clientY }
+  }
+
+  if (isTouchEvent(event) && event.changedTouches.length > 0) {
+    return { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY }
+  }
+
+  const mouseEvent = event as MouseEvent
+  return { x: mouseEvent.clientX, y: mouseEvent.clientY }
+}
+
+function isPrimaryPointerDown(event: Event) {
+  if (isTouchEvent(event)) return event.touches.length > 0
+  return (event as MouseEvent).buttons === 1
+}
+
+function isTouchEvent(event: Event): event is TouchEvent {
+  return typeof TouchEvent !== 'undefined' && event instanceof TouchEvent
 }

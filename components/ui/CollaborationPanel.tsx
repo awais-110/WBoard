@@ -20,7 +20,7 @@ export default function CollaborationPanel() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="pointer-events-auto absolute right-4 top-4 z-30 flex items-center gap-2 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a]/90 px-3 py-2 text-sm font-medium text-white shadow-lg backdrop-blur hover:bg-[#2a2a2a]"
+        className="pointer-events-auto absolute right-2 top-2 z-30 flex items-center gap-2 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a]/90 px-2.5 py-2 text-sm font-medium text-white shadow-lg backdrop-blur hover:bg-[#2a2a2a] sm:right-4 sm:top-4 sm:px-3"
       >
         <Users size={15} />
         {uniqueUsers.length > 0 && (
@@ -44,7 +44,7 @@ export default function CollaborationPanel() {
   }
 
   return (
-    <div className="pointer-events-auto absolute right-4 top-4 z-30 w-64 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a]/90 p-3 text-white shadow-2xl backdrop-blur">
+    <div className="pointer-events-auto absolute right-2 top-2 z-30 w-[min(16rem,calc(100%-1rem))] rounded-xl border border-[#2a2a2a] bg-[#1a1a1a]/90 p-3 text-white shadow-2xl backdrop-blur sm:right-4 sm:top-4 sm:w-64">
       <div className="flex items-center justify-between mb-2">
         <div className="text-sm font-semibold text-white">Collaborators</div>
         <div className="flex items-center gap-1">

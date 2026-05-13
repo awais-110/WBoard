@@ -71,7 +71,7 @@ export default function Canvas({
 
   return (
     <div
-      className="whiteboard-dot-grid relative h-full w-full overflow-hidden bg-white"
+      className="whiteboard-dot-grid relative h-full w-full touch-none overflow-hidden bg-white"
       onMouseMove={(e) => {
         const now = performance.now()
         const last = (canvasRef.current as any)?._lastCursorUpdate || 0
@@ -84,10 +84,10 @@ export default function Canvas({
     >
       <canvas ref={canvasRef} className="block" />
       {isEmpty && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="rounded-xl border border-[#2a2a2a]/15 bg-white/90 px-6 py-5 text-center shadow-lg backdrop-blur">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-5">
+          <div className="max-w-[280px] rounded-2xl border border-[#2a2a2a]/15 bg-white/90 px-5 py-4 text-center shadow-lg backdrop-blur sm:max-w-none sm:rounded-xl sm:px-6 sm:py-5">
             <p className="text-base font-semibold text-slate-900">Start drawing!</p>
-            <p className="mt-1 text-sm text-slate-500">Pick a tool from the left panel to add shapes, text, or notes.</p>
+            <p className="mt-1 text-sm leading-5 text-slate-500">Pick a tool from the bottom dock to add shapes, text, or notes.</p>
           </div>
         </div>
       )}

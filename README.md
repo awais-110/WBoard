@@ -39,8 +39,6 @@ A production-grade, real-time collaborative whiteboard application built with **
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+
-- Supabase account (free tier available)
 
 ### Local Development
 
@@ -122,10 +120,6 @@ git push origin main
 
 ## 🔒 Security
 
-- **RLS Policies**: Database-level access control
-- **Auth**: Supabase email/password with session management
-- **API**: Authorization checks on all routes
-- **Data**: JSONB serialization with validation
 
 ## 📊 Architecture
 
@@ -141,48 +135,20 @@ Real-time Delta Events to All Clients
 
 ## 🚢 Production Checklist
 
-- [x] Authentication & Session management
-- [x] Role-based access control via RLS
-- [x] Real-time collaboration with Realtime
-- [x] Auto-save every 30 seconds
-- [x] Error handling & validation
-- [x] Responsive UI with Tailwind
-- [x] Export functionality
-- [x] Environment variables configured
 
 ## 📈 Performance
 
-- Delta events (not full snapshots)
-- Debounced auto-save
-- In-memory presence (no DB writes)
-- Code splitting with Next.js
-- Optimized Fabric.js serialization
 
 ## 🤖 Tech Stack
 
-- **Frontend**: React 18, Next.js 14, TypeScript
-- **State**: Zustand, React hooks
-- **Canvas**: Fabric.js 5
-- **Real-time**: Supabase Realtime (WebSocket)
-- **Database**: PostgreSQL with RLS
-- **Styling**: Tailwind CSS
-- **Hosting**: Vercel
-- **Notifications**: React Hot Toast
 
 ## 🐛 Troubleshooting
 
 **Session expired?**
-- Clear cookies, log in again
 
 **Real-time not working?**
-- Check Supabase Dashboard > Realtime > Subscriptions
-- Verify canvas_events table has replication enabled
-- Check browser console for errors
 
 **Canvas not loading?**
-- Verify board exists: check `/api/boards/:boardId`
-- Check browser DevTools > Network tab
-- Ensure Fabric.js canvas element is mounted
 
 ## 📝 License
 
@@ -192,6 +158,5 @@ MIT
 
 Built with Next.js, Supabase, Fabric.js, and Tailwind CSS.
 
----
 
 **Live Demo**: [your-app.vercel.app](https://your-app.vercel.app)

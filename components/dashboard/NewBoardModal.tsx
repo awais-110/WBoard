@@ -47,13 +47,16 @@ export default function NewBoardModal({ onClose }: NewBoardModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 text-white shadow-2xl transition-all">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md">
+      <div className="w-full max-w-md rounded-[32px] border border-[#00A198]/15 bg-white p-6 shadow-2xl shadow-[#00A198]/15 transition-all">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">New Board</h2>
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#008B7A]/80">New board</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900">Create a workspace</h2>
+          </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-white/55 transition-colors hover:bg-[#2a2a2a] hover:text-white"
+            className="rounded-2xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
           >
             <X size={20} />
           </button>
@@ -65,7 +68,7 @@ export default function NewBoardModal({ onClose }: NewBoardModalProps) {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Enter board title..."
           autoFocus
-          className="mb-4 h-10 w-full rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-violet-600 focus:ring-2 focus:ring-violet-600/30"
+          className="mb-4 h-12 w-full rounded-3xl border border-[#00A198]/20 bg-[#F7FFFD] px-4 text-sm text-slate-900 outline-none placeholder:text-[#00A198]/40 focus:border-[#00A198] focus:ring-2 focus:ring-[#00A198]/20"
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleCreate()
           }}

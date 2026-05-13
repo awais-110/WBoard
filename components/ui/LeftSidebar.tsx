@@ -73,7 +73,7 @@ export default function LeftSidebar({
 
   if (!canEdit) {
     return (
-      <aside className="w-14 shrink-0 border-r border-[#2a2a2a] bg-[#1a1a1a] px-2 py-3 text-white">
+      <aside className="hidden w-14 shrink-0 border-r border-[#2a2a2a] bg-[#1a1a1a] px-2 py-3 text-white md:block">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#2a2a2a] text-xs font-semibold text-white/50" title="View only">
           VO
         </div>
@@ -82,7 +82,7 @@ export default function LeftSidebar({
   }
 
   return (
-    <aside className="w-14 shrink-0 overflow-y-auto border-r border-[#2a2a2a] bg-[#1a1a1a] px-2 py-3 text-white">
+    <aside className="hidden w-14 shrink-0 overflow-y-auto border-r border-[#2a2a2a] bg-[#1a1a1a] px-2 py-3 text-white md:block">
       <section className="flex flex-col items-center gap-2">
         {TOOLS.map(({ type, icon: Icon, label, shortcut }) => (
           <button

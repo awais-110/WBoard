@@ -32,6 +32,24 @@ type CanvasEventInsert = {
   created_at?: string
 }
 
+type EmailVerificationToken = {
+  id: string
+  user_id: string
+  email: string
+  token: string
+  expires_at: string
+  created_at: string
+}
+
+type EmailVerificationTokenInsert = {
+  id?: string
+  user_id: string
+  email: string
+  token: string
+  expires_at: string
+  created_at?: string
+}
+
 /**
  * Database schema type definitions.
  * Generated from Supabase schema.
@@ -60,6 +78,12 @@ export type Database = {
       canvas_events: {
         Row: CanvasEvent
         Insert: CanvasEventInsert
+        Update: never
+        Relationships: []
+      }
+      email_verification_tokens: {
+        Row: EmailVerificationToken
+        Insert: EmailVerificationTokenInsert
         Update: never
         Relationships: []
       }

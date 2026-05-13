@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IdeaSpace Hero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Instrument+Serif:opsz,wght@8..144,600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: 'DM Sans', system-ui, sans-serif;
+        background: #f7f5f0;
+        color: #0d0d0d;
+        accent-color: #0abfbc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #f7f5f0;
+      }
+
+      body {
+        overflow-x: hidden;
+      }
+
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: radial-gradient(rgba(13, 13, 13, 0.02) 1px, transparent 1px);
+        background-size: 28px 28px;
+        opacity: 0.35;
+        pointer-events: none;
+      }
+
+      .page {
+        position: relative;
+        min-height: 100vh;
+        padding: 28px 32px 48px;
+      }
+
+      .nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 36px;
+        background: rgba(247, 245, 240, 0.92);
+        backdrop-filter: blur(18px);
+        border-bottom: 1px solid rgba(13, 13, 13, 0.08);
+      }
+
+      .nav__brand {
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .nav__links {
+        display: flex;
+        gap: 30px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .nav__link {
+        text-decoration: none;
+        color: #0d0d0d;
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+
+      .nav__actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .nav__signin {
+        color: #0d0d0d;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .button,
+      .button--ghost {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-decoration: none;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+      }
+
+      .button {
+        padding: 0 26px;
+        background: #0d0d0d;
+        color: #f7f5f0;
+      }
+
+      .button:hover,
+      .button--ghost:hover {
+        transform: translateY(-1px);
+      }
+
+      .button--ghost {
+        padding: 0 24px;
+        background: transparent;
+        color: #0d0d0d;
+        border-color: rgba(13, 13, 13, 0.16);
+      }
+
+      .hero {
+        position: relative;
+        width: min(1120px, 100%);
+        margin: 0 auto;
+        padding: 142px 24px 0;
+        text-align: center;
+      }
+
+      .hero__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 18px;
+        border-radius: 999px;
+        background: rgba(10, 191, 188, 0.12);
+        color: #0d0d0d;
+        font-size: 0.82rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        backdrop-filter: blur(10px);
+        opacity: 0;
+        animation: fade-up 0.7s ease forwards;
+        animation-delay: 0.1s;
+      }
+
+      .hero__badge::before {
+        content: '';
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #0abfbc;
+        box-shadow: 0 0 0 4px rgba(10, 191, 188, 0.14);
+      }
+
+      .hero__title {
+        margin: 32px auto 20px;
+        max-width: 760px;
+        font-family: 'Instrument Serif', Georgia, serif;
+        font-size: clamp(4rem, 8vw, 7.25rem);
+        line-height: 0.92;
+        letter-spacing: -0.06em;
+        font-weight: 600;
+        color: #0d0d0d;
+        opacity: 0;
+        animation: fade-up 0.7s ease forwards;
+        animation-delay: 0.2s;
+      }
+
+      .hero__title strong {
+        display: block;
+        font-style: italic;
+        color: #0abfbc;
+      }
+
+      .hero__subtitle {
+        max-width: 540px;
+        margin: 0 auto 36px;
+        color: rgba(13, 13, 13, 0.7);
+        font-size: 1.05rem;
+        line-height: 1.85;
+        opacity: 0;
+        animation: fade-up 0.7s ease forwards;
+        animation-delay: 0.3s;
+      }
+
+      .hero__ctas {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: center;
+        margin-bottom: 52px;
+        opacity: 0;
+        animation: fade-up 0.7s ease forwards;
+        animation-delay: 0.4s;
+      }
+
+      .hero__canvas {
+        position: relative;
+        width: min(960px, 100%);
+        margin: 0 auto;
+        padding: 30px;
+        border-radius: 34px;
+        background: #ffffff;
+        box-shadow: 0 40px 90px rgba(13, 13, 13, 0.08);
+        border: 1px solid rgba(13, 13, 13, 0.04);
+        opacity: 0;
+        animation: fade-up 0.7s ease forwards;
+        animation-delay: 0.5s;
+      }
+
+      .canvas-grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      .canvas-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .board-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(13, 13, 13, 0.08);
+        font-size: 0.92rem;
+        color: #0d0d0d;
+      }
+
+      .board-chip span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #0abfbc;
+      }
+
+      .nodes {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .node {
+        min-height: 104px;
+        border-radius: 24px;
+        padding: 18px;
+        background: #fbfaf7;
+        border: 1px solid rgba(13, 13, 13, 0.06);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+      }
+
+      .node--note {
+        background: #fffbec;
+      }
+
+      .node--note strong {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 0.98rem;
+      }
+
+      .node--note p,
+      .node--text p {
+        margin: 0;
+        color: rgba(13, 13, 13, 0.8);
+        line-height: 1.75;
+        font-size: 0.95rem;
+      }
+
+      .arrows {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .arrow {
+        position: absolute;
+        width: 2px;
+        height: 90px;
+        background: rgba(13, 13, 13, 0.16);
+        transform-origin: top center;
+      }
+
+      .arrow::after {
+        content: '';
+        position: absolute;
+        right: -8px;
+        top: calc(100% - 8px);
+        width: 12px;
+        height: 12px;
+        border-right: 2px solid rgba(13, 13, 13, 0.32);
+        border-bottom: 2px solid rgba(13, 13, 13, 0.32);
+        transform: rotate(45deg);
+      }
+
+      .avatar-stack {
+        display: inline-flex;
+        align-items: center;
+        gap: -10px;
+      }
+
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 2px solid #f7f5f0;
+        background: #0d0d0d;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .avatar--teal {
+        background: #0abfbc;
+      }
+
+      .hero__canvas::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 34px;
+        background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(13,13,13,0.02) 58%, rgba(13,13,13,0.025) 100%);
+        pointer-events: none;
+      }
+
+      .hero__canvas-inner {
+        position: relative;
+        display: grid;
+        gap: 18px;
+      }
+
+      .hero__canvas strong {
+        font-size: 0.95rem;
+        color: #0d0d0d;
+      }
+
+      .hero__canvas p {
+        margin: 0;
+        color: rgba(13, 13, 13, 0.72);
+        font-size: 0.95rem;
+        line-height: 1.7;
+      }
+
+      .hero__canvas .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.92rem;
+        color: rgba(13, 13, 13, 0.75);
+      }
+
+      .ghost-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(13, 13, 13, 0.12);
+        color: rgba(13, 13, 13, 0.8);
+        background: rgba(255,255,255,0.9);
+      }
+
+      .hero__canvas-footer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 18px;
+      }
+
+      .hero__canvas-footer .ghost-pill {
+        margin-top: 8px;
+      }
+
+      @media (max-width: 900px) {
+        .nav {
+          padding: 16px 24px;
+        }
+
+        .nav__links {
+          gap: 20px;
+        }
+
+        .hero {
+          padding-top: 120px;
+        }
+
+        .hero__title {
+          font-size: clamp(3.6rem, 10vw, 5.75rem);
+        }
+
+        .hero__canvas {
+          padding: 24px;
+        }
+
+        .nodes {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .page {
+          padding: 20px 18px 38px;
+        }
+
+        .nav {
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 12px;
+        }
+
+        .nav__links {
+          order: 3;
+          width: 100%;
+          justify-content: center;
+          flex-wrap: wrap;
+          gap: 14px;
+        }
+
+        .nav__actions {
+          width: 100%;
+          justify-content: center;
+          gap: 12px;
+        }
+
+        .hero__badge,
+        .hero__ctas,
+        .hero__subtitle,
+        .hero__canvas {
+          width: 100%;
+        }
+
+        .hero__canvas {
+          padding: 20px;
+        }
+
+        .hero__canvas-footer {
+          flex-direction: column;
+          align-items: stretch;
+        }
+      }
+
+      @keyframes fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .custom-cursor {
+        position: fixed;
+        pointer-events: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #0abfbc;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+        mix-blend-mode: multiply;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="custom-cursor" id="cursor"></div>
+    <div class="page">
+      <header class="nav">
+        <div class="nav__brand">IDEASPACE</div>
+        <ul class="nav__links">
+          <li><a class="nav__link" href="#why">Why</a></li>
+          <li><a class="nav__link" href="#canvas">Canvas</a></li>
+          <li><a class="nav__link" href="#start">Start</a></li>
+        </ul>
+        <div class="nav__actions">
+          <a class="nav__signin" href="#login">Sign In</a>
+          <a class="button" href="#start">Get Started</a>
+        </div>
+      </header>
+
+      <main class="hero">
+        <div class="hero__badge">The New Way to Ideate</div>
+        <h1 class="hero__title">
+          Collaborate.
+          <strong>Create. Innovate.</strong>
+        </h1>
+        <p class="hero__subtitle">Turn ideas into shared visual workflows with a single clean canvas.</p>
+        <div class="hero__ctas">
+          <a class="button" href="#start">Start a board</a>
+          <a class="button button--ghost" href="#why">See how</a>
+        </div>
+
+        <section class="hero__canvas" id="canvas">
+          <div class="hero__canvas-inner">
+            <div class="canvas-top">
+              <div class="board-chip"><span></span> Sprint planning board</div>
+              <div class="status">Live • 4 collaborators</div>
+            </div>
+            <div class="nodes">
+              <div class="node node--note">
+                <strong>Ideas</strong>
+                <p>Define the next experiment in one place for everyone.</p>
+              </div>
+              <div class="node">
+                <strong>Workflow</strong>
+                <p>Drag, connect, and organize notes without manual setup.</p>
+              </div>
+              <div class="node node--note">
+                <strong>Design</strong>
+                <p>Keep every contribution visible with live cursors and comments.</p>
+              </div>
+            </div>
+            <div class="hero__canvas-footer">
+              <div class="avatar-stack">
+                <div class="avatar">AL</div>
+                <div class="avatar avatar--teal">MK</div>
+                <div class="avatar">SJ</div>
+              </div>
+              <div class="ghost-pill">Realtime collaboration • 3 cursors</div>
+            </div>
+          </div>
+          <div class="arrows">
+            <div class="arrow" style="top: 24%; left: 14%; transform: rotate(28deg);"></div>
+            <div class="arrow" style="top: 46%; left: 45%; transform: rotate(-12deg); height: 72px;"></div>
+            <div class="arrow" style="top: 70%; left: 74%; transform: rotate(18deg); height: 58px;"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script>
+      const cursor = document.getElementById('cursor');
+      window.addEventListener('mousemove', (event) => {
+        cursor.style.left = `${event.clientX}px`;
+        cursor.style.top = `${event.clientY}px`;
+      });
+
+      window.addEventListener('mouseleave', () => {
+        cursor.style.opacity = '0';
+      });
+      window.addEventListener('mouseenter', () => {
+        cursor.style.opacity = '1';
+      });
+    </script>
+  </body>
+</html>

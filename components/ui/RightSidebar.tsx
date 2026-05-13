@@ -117,7 +117,7 @@ export default function RightSidebar({ fabricRef, isCollapsed, onToggleCollapse 
 
   if (isCollapsed) {
     return (
-      <aside className="relative w-14 shrink-0 border-l border-[#2a2a2a] bg-[#1a1a1a] shadow-sm transition-all duration-200">
+      <aside className="relative hidden w-14 shrink-0 border-l border-[#2a2a2a] bg-[#1a1a1a] shadow-sm transition-all duration-200 lg:block">
         <button
           type="button"
           onClick={onToggleCollapse}
@@ -139,7 +139,7 @@ export default function RightSidebar({ fabricRef, isCollapsed, onToggleCollapse 
   }
 
   return (
-    <aside className="relative w-[280px] shrink-0 overflow-y-auto border-l border-[#2a2a2a] bg-[#1a1a1a] p-4 text-white shadow-sm transition-all duration-200">
+    <aside className="relative hidden w-[280px] shrink-0 overflow-y-auto border-l border-[#2a2a2a] bg-[#1a1a1a] p-4 text-white shadow-sm transition-all duration-200 lg:block">
       <button
         type="button"
         onClick={onToggleCollapse}

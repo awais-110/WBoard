@@ -22,13 +22,15 @@ export default async function BoardPage({ params }: BoardPageProps) {
   if (!user) redirect('/login')
 
   // Fetch board with members, but handle case where members list is empty
-  const { data, error } = await supabase
+  const { data: initialData, error: initialError } = await supabase
     .from('boards')
     .select('id, title, owner_id, canvas_data, thumbnail_url, is_public, created_at, updated_at')
     .eq('id', params.boardId)
     .single()
 
-  if (error || !data) {
+  let data = initialData
+
+  if (initialError || !data) {
     // Add small retry for replication delay
     await new Promise(resolve => setTimeout(resolve, 500))
     
@@ -49,7 +51,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
     .eq('board_id', params.boardId)
 
   const board = {
-    ...data,
+    ...(data as any),
     board_members: members ?? []
   } as any
 

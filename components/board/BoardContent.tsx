@@ -82,13 +82,13 @@ export default function BoardContent({ board, canEdit }: BoardContentProps) {
   }, [undo, redo, handleDeleteSelected])
 
   return (
-    <div className="h-screen overflow-hidden bg-[#0f0f0f] text-white">
+    <div className="h-[100dvh] overflow-hidden bg-[#0f0f0f] text-white">
       <div className="fixed inset-x-0 top-0 z-50 border-b border-[#2a2a2a] bg-[#0f0f0f]/95 shadow-sm backdrop-blur">
         <TopNavbar boardName={board.title || 'Board'} />
         <BoardHeader board={board} canEdit={canEdit} fabricRef={fabricRef} />
       </div>
 
-      <div className="flex h-full min-h-0 pt-24">
+      <div className="flex h-full min-h-0 pt-14 sm:pt-24">
         <LeftSidebar
           canEdit={canEdit}
           onUndo={handleUndo}
@@ -97,8 +97,8 @@ export default function BoardContent({ board, canEdit }: BoardContentProps) {
           onDeleteSelected={handleDeleteSelected}
         />
 
-        <main className="relative min-w-0 flex-1 overflow-hidden bg-[#0f0f0f] p-3">
-          <div className="relative h-full overflow-hidden rounded-xl border border-[#2a2a2a] bg-white shadow-2xl">
+        <main className="relative min-w-0 flex-1 overflow-hidden bg-[#0f0f0f] p-1.5 pb-24 sm:p-3">
+          <div className="relative h-full overflow-hidden rounded-lg border border-[#2a2a2a] bg-white shadow-2xl sm:rounded-xl">
             <Canvas
               boardId={board.id}
               initialData={board.canvas_data}

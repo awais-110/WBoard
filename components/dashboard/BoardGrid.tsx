@@ -48,9 +48,14 @@ export default function BoardGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {boards.map((board) => (
-        <BoardCard key={board.id} board={board} onDelete={allowDelete && board.access === 'owned' ? handleDelete : undefined} />
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {boards.map((board, index) => (
+        <BoardCard
+          key={board.id}
+          board={board}
+          variant={index}
+          onDelete={allowDelete && board.access === 'owned' ? handleDelete : undefined}
+        />
       ))}
     </div>
   )
