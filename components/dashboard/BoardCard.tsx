@@ -36,7 +36,7 @@ export default function BoardCard({ board, onDelete }: BoardCardProps) {
   }, [board.canvas_data, board.thumbnail_url])
 
   return (
-    <Link href={`/board/${board.id}`} className="group block h-full">
+    <Link href={`/dashboard/board/${board.id}`} className="group block h-full">
       <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#00A198]/20 bg-gradient-to-br from-white to-[#E4DDD3]/20 shadow-md shadow-[#00A198]/5 transition duration-300 hover:-translate-y-1 hover:border-[#00A198]/40 hover:shadow-lg hover:shadow-[#00A198]/15">
         <div className="relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br from-[#E4DDD3]/40 to-[#00A198]/10">
           {preview ? (

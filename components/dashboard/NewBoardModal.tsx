@@ -37,7 +37,7 @@ export default function NewBoardModal({ onClose }: NewBoardModalProps) {
       }
       const data = await res.json()
       toast.success('Board created!')
-      router.push(`/board/${data.id}`)
+      router.push(`/dashboard/board/${data.id}`)
       router.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to create board')

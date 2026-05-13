@@ -175,7 +175,7 @@ export default function DashboardContent({ boards, sharedBoards = [] }: Dashboar
                 recentBoards.map((board) => (
                   <Link
                     key={board.id}
-                    href={`/board/${board.id}`}
+                    href={`/dashboard/board/${board.id}`}
                     className="group block rounded-2xl border border-[#00A198]/20 bg-gradient-to-r from-white to-[#E4DDD3]/20 p-4 shadow-sm transition hover:border-[#00A198]/40 hover:from-white hover:to-[#E4DDD3]/40 hover:shadow-md hover:shadow-[#00A198]/10"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
