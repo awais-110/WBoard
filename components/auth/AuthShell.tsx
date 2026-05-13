@@ -348,6 +348,22 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
         </aside>
 
         <main className="form-panel">
+          <div className="auth-topbar">
+            <Link href="/" className="auth-logo" aria-label="IdeaSpace home">
+              <div className="auth-logo-badge">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="2" y="2" width="6" height="6" rx="1.5" fill="#0ABFBC"/>
+                  <rect x="10" y="2" width="6" height="6" rx="1.5" fill="#F59E0B"/>
+                  <rect x="2" y="10" width="6" height="6" rx="1.5" fill="#8B5CF6"/>
+                  <rect x="10" y="10" width="6" height="6" rx="1.5" fill="#EC4899"/>
+                </svg>
+              </div>
+              <div className="auth-logo-copy">
+                <span>IdeaSpace</span>
+                <span>Workspace</span>
+              </div>
+            </Link>
+          </div>
           <div className={`auth-card ${shake ? 'shake' : ''}`}>
             <div className="form-header">
               <p className="form-eyebrow">{mode === 'login' ? 'Sign in to IdeaSpace' : 'Create your IdeaSpace account'}</p>
@@ -705,6 +721,58 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
           position: relative;
         }
 
+        .auth-topbar {
+          position: absolute;
+          top: 18px;
+          left: 24px;
+          right: 24px;
+          display: flex;
+          justify-content: flex-start;
+          z-index: 2;
+        }
+
+        .auth-logo {
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+          text-decoration: none;
+          color: inherit;
+          padding: 8px 12px;
+          border-radius: 16px;
+          background: rgba(255,255,255,0.9);
+          border: 1px solid rgba(13,13,13,0.08);
+          box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        .auth-logo-badge {
+          width: 38px;
+          height: 38px;
+          border-radius: 12px;
+          background: #0D0D0D;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(0,0,0,0.12);
+          flex-shrink: 0;
+        }
+
+        .auth-logo-copy {
+          display: grid;
+          gap: 2px;
+          line-height: 1;
+        }
+
+        .auth-logo-copy span:first-child {
+          font-size: 15px;
+          font-weight: 700;
+        }
+
+        .auth-logo-copy span:last-child {
+          font-size: 10px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: #6B6B6B;
+        }
+
         .auth-card {
           width: min(420px, 100%);
           max-height: calc(100vh - 48px);
@@ -1009,8 +1077,14 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
             display: none;
           }
 
+          .auth-topbar {
+            position: static;
+            margin-bottom: 16px;
+            justify-content: center;
+          }
+
           .form-panel {
-            padding: 18px;
+            padding: 18px 18px 12px;
           }
         }
 
