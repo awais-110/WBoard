@@ -1,7 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Copy, Eye, EyeOff, Layers, Sliders, Trash2 } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { useCanvasStore } from '@/stores/canvasStore'
+import { ChevronRight, Layers, Settings2, AlignLeft, AlignCenter, AlignRight, AlignStartVertical, AlignCenterVertical, AlignEndVertical, Eye, EyeOff, Lock, Unlock, Trash2, Copy } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { fabric } from 'fabric'
 
 interface RightSidebarProps {
@@ -10,259 +12,293 @@ interface RightSidebarProps {
   onToggleCollapse: () => void
 }
 
-interface CanvasLayer {
-  id: string
-  label: string
-  visible: boolean
-  object: fabric.Object
-}
-
-interface SelectionProperties {
-  type: string
-  left: number
-  top: number
-  width: number
-  height: number
-  fill: string
-  stroke: string
-}
+type Tab = 'properties' | 'layers'
 
 export default function RightSidebar({ fabricRef, isCollapsed, onToggleCollapse }: RightSidebarProps) {
-  const [selected, setSelected] = useState<SelectionProperties | null>(null)
-  const [layers, setLayers] = useState<CanvasLayer[]>([])
+  const [tab, setTab] = useState<Tab>('properties')
+  const [selected, setSelected] = useState<fabric.Object | null>(null)
+  const [layers, setLayers] = useState<fabric.Object[]>([])
+  const [, forceUpdate] = useState(0)
+  const { strokeColor, setStrokeColor, fillColor, setFillColor, strokeWidth, setStrokeWidth, opacity, setOpacity } = useCanvasStore()
 
   const refresh = useCallback(() => {
     const canvas = fabricRef.current
     if (!canvas) return
-
-    const active = canvas.getActiveObject()
-    setSelected(active ? getSelectionProperties(active) : null)
-    setLayers(
-      canvas.getObjects().map((object, index) => ({
-        id: getObjectId(object, index),
-        label: `${object.type ?? 'object'} ${index + 1}`,
-        visible: object.visible !== false,
-        object,
-      })).reverse()
-    )
+    setLayers([...canvas.getObjects()].reverse())
+    setSelected(canvas.getActiveObject() ?? null)
+    forceUpdate((n) => n + 1)
   }, [fabricRef])
 
   useEffect(() => {
     const canvas = fabricRef.current
-    if (!canvas) {
-      const timer = window.setTimeout(refresh, 150)
-      return () => window.clearTimeout(timer)
-    }
-
-    const events = [
-      'selection:created',
-      'selection:updated',
-      'selection:cleared',
-      'object:added',
-      'object:removed',
-      'object:modified',
-      'object:moving',
-      'object:scaling',
-    ] as const
-
-    events.forEach((eventName) => canvas.on(eventName, refresh))
-    refresh()
-
+    if (!canvas) return
+    canvas.on('selection:created', refresh)
+    canvas.on('selection:updated', refresh)
+    canvas.on('selection:cleared', refresh)
+    canvas.on('object:added', refresh)
+    canvas.on('object:removed', refresh)
+    canvas.on('object:modified', refresh)
     return () => {
-      events.forEach((eventName) => canvas.off(eventName, refresh))
+      canvas.off('selection:created', refresh)
+      canvas.off('selection:updated', refresh)
+      canvas.off('selection:cleared', refresh)
+      canvas.off('object:added', refresh)
+      canvas.off('object:removed', refresh)
+      canvas.off('object:modified', refresh)
     }
   }, [fabricRef, refresh])
 
-  const duplicateSelected = () => {
+  const updateSelected = (props: Record<string, any>) => {
     const canvas = fabricRef.current
-    const active = canvas?.getActiveObject()
-    if (!canvas || !active) return
-
-    active.clone((clone: fabric.Object) => {
-      clone.set({
-        left: (active.left ?? 0) + 24,
-        top: (active.top ?? 0) + 24,
-        evented: true,
-        visible: true,
-      })
-      ;(clone as fabric.Object & { id?: string }).id = crypto.randomUUID()
-      canvas.add(clone)
-      canvas.setActiveObject(clone)
-      canvas.requestRenderAll()
-      refresh()
-    }, ['id'])
+    const obj = canvas?.getActiveObject()
+    if (!obj) return
+    obj.set(props)
+    obj.setCoords()
+    canvas?.requestRenderAll()
+    canvas?.fire('object:modified', { target: obj })
   }
 
-  const deleteSelected = () => {
+  const align = (dir: string) => {
     const canvas = fabricRef.current
     if (!canvas) return
-
-    const activeObjects = canvas.getActiveObjects()
-    if (!activeObjects.length) return
-    canvas.discardActiveObject()
-    activeObjects.forEach((object) => canvas.remove(object))
+    const objs = canvas.getActiveObjects()
+    const bounds = canvas.getActiveObject()?.getBoundingRect()
+    if (!bounds || objs.length < 2) return
+    objs.forEach((obj) => {
+      if (dir === 'left') obj.set({ left: bounds.left })
+      if (dir === 'center') obj.set({ left: bounds.left + bounds.width / 2 - (obj.getScaledWidth() / 2) })
+      if (dir === 'right') obj.set({ left: bounds.left + bounds.width - obj.getScaledWidth() })
+      if (dir === 'top') obj.set({ top: bounds.top })
+      if (dir === 'middle') obj.set({ top: bounds.top + bounds.height / 2 - (obj.getScaledHeight() / 2) })
+      if (dir === 'bottom') obj.set({ top: bounds.top + bounds.height - obj.getScaledHeight() })
+      obj.setCoords()
+    })
     canvas.requestRenderAll()
+  }
+
+  const toggleVisibility = (obj: fabric.Object) => {
+    obj.set({ visible: !obj.visible })
+    fabricRef.current?.requestRenderAll()
     refresh()
   }
 
-  const toggleLayer = (layer: CanvasLayer) => {
+  const toggleLock = (obj: fabric.Object) => {
+    const locked = (obj as any)._locked
+    obj.set({
+      selectable: locked,
+      evented: locked,
+      lockMovementX: !locked,
+      lockMovementY: !locked,
+    });
+    (obj as any)._locked = !locked
+    fabricRef.current?.requestRenderAll()
+    refresh()
+  }
+
+  const deleteObj = (obj: fabric.Object) => {
+    fabricRef.current?.remove(obj)
+    fabricRef.current?.requestRenderAll()
+    refresh()
+  }
+
+  const duplicateObj = (obj: fabric.Object) => {
+    obj.clone((cloned: fabric.Object) => {
+      cloned.set({ left: (obj.left ?? 0) + 20, top: (obj.top ?? 0) + 20 })
+      ;(cloned as any).id = crypto.randomUUID()
+      fabricRef.current?.add(cloned)
+      fabricRef.current?.setActiveObject(cloned)
+      fabricRef.current?.requestRenderAll()
+      refresh()
+    })
+  }
+
+  const selectLayer = (obj: fabric.Object) => {
     const canvas = fabricRef.current
     if (!canvas) return
-
-    layer.object.set('visible', layer.object.visible === false)
-    canvas.discardActiveObject()
+    canvas.setActiveObject(obj)
     canvas.requestRenderAll()
     refresh()
   }
 
   if (isCollapsed) {
     return (
-      <aside className="relative hidden w-14 shrink-0 border-l border-[#2a2a2a] bg-[#1a1a1a] shadow-sm transition-all duration-200 lg:block">
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          className="absolute -left-4 top-4 z-20 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-white/70 shadow-sm transition-colors hover:bg-[#2a2a2a] hover:text-white"
-          title="Expand inspector"
-          aria-label="Expand inspector"
-        >
-          <ChevronLeft size={16} />
-        </button>
-        <div className="flex h-full flex-col items-center gap-3 px-2 py-4">
-          <Sliders size={18} className="text-white/55" />
-          <div className="h-px w-8 bg-[#2a2a2a]" />
-          <div className="flex rotate-90 items-center gap-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-white/45">
-            Inspector
-          </div>
-        </div>
-      </aside>
+      <button
+        onClick={onToggleCollapse}
+        className="fixed right-0 top-1/2 z-40 flex -translate-y-1/2 items-center justify-center rounded-l-xl border border-r-0 border-[#2a2a2a] bg-[#0f0f0f] px-1.5 py-4 text-white/60 hover:text-white transition-colors"
+      >
+        <ChevronRight size={14} />
+      </button>
     )
   }
 
   return (
-    <aside className="relative hidden w-[280px] shrink-0 overflow-y-auto border-l border-[#2a2a2a] bg-[#1a1a1a] p-4 text-white shadow-sm transition-all duration-200 lg:block">
-      <button
-        type="button"
-        onClick={onToggleCollapse}
-        className="absolute -left-4 top-4 z-20 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] text-white/70 shadow-sm transition-colors hover:bg-[#2a2a2a] hover:text-white"
-        title="Collapse inspector"
-        aria-label="Collapse inspector"
-      >
-        <ChevronRight size={16} />
-      </button>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-white/45">Inspector</p>
-          <h2 className="text-sm font-semibold text-white">Properties</h2>
-        </div>
-        <Sliders size={18} className="text-white/45" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={duplicateSelected}
-          disabled={!selected}
-          className="flex h-9 items-center justify-center gap-2 rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] text-sm font-medium text-white/70 transition-colors hover:bg-[#2a2a2a] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Copy size={16} />
-          Duplicate
-        </button>
-        <button
-          type="button"
-          onClick={deleteSelected}
-          disabled={!selected}
-          className="flex h-9 items-center justify-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-sm font-medium text-rose-300 transition-colors hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Trash2 size={16} />
-          Delete
+    <aside className="flex w-64 shrink-0 flex-col border-l border-[#2a2a2a] bg-[#0f0f0f] overflow-hidden">
+      {/* Tabs */}
+      <div className="flex border-b border-[#2a2a2a]">
+        {(['properties', 'layers'] as Tab[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium capitalize transition-colors',
+              tab === t ? 'border-b-2 border-violet-500 text-white' : 'text-white/50 hover:text-white'
+            )}
+          >
+            {t === 'properties' ? <Settings2 size={12} /> : <Layers size={12} />}
+            {t}
+          </button>
+        ))}
+        <button onClick={onToggleCollapse} className="px-2 text-white/40 hover:text-white transition-colors">
+          <ChevronRight size={14} />
         </button>
       </div>
 
-      <section className="mt-4 rounded-xl border border-[#2a2a2a] bg-[#0f0f0f]/80 p-3 backdrop-blur">
-        <h3 className="text-sm font-semibold text-white">Selection</h3>
-        {selected ? (
-          <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-            <Property label="Type" value={selected.type} />
-            <Property label="Fill" value={selected.fill} swatch={selected.fill} />
-            <Property label="X" value={`${selected.left}px`} />
-            <Property label="Y" value={`${selected.top}px`} />
-            <Property label="Width" value={`${selected.width}px`} />
-            <Property label="Height" value={`${selected.height}px`} />
-            <Property label="Stroke" value={selected.stroke} swatch={selected.stroke} />
-          </div>
-        ) : (
-          <div className="mt-3 rounded-lg border border-dashed border-[#3a3a3a] bg-[#1a1a1a] p-3 text-sm text-white/50">
-            Select an object to inspect its size, position, and colors.
-          </div>
-        )}
-      </section>
+      <div className="flex-1 overflow-y-auto p-3 space-y-4">
+        {tab === 'properties' ? (
+          <>
+            {selected ? (
+              <>
+                <Section title="Position & Size">
+                  <div className="grid grid-cols-2 gap-2">
+                    <NumInput label="X" value={Math.round(selected.left ?? 0)} onChange={(v) => updateSelected({ left: v })} />
+                    <NumInput label="Y" value={Math.round(selected.top ?? 0)} onChange={(v) => updateSelected({ top: v })} />
+                    <NumInput label="W" value={Math.round((selected.width ?? 0) * (selected.scaleX ?? 1))} onChange={(v) => updateSelected({ scaleX: v / (selected.width ?? 1) })} />
+                    <NumInput label="H" value={Math.round((selected.height ?? 0) * (selected.scaleY ?? 1))} onChange={(v) => updateSelected({ scaleY: v / (selected.height ?? 1) })} />
+                    <NumInput label="°" value={Math.round(selected.angle ?? 0)} onChange={(v) => updateSelected({ angle: v })} />
+                    <NumInput label="%" value={Math.round((selected.opacity ?? 1) * 100)} onChange={(v) => updateSelected({ opacity: v / 100 })} />
+                  </div>
+                </Section>
 
-      <section className="mt-4 rounded-xl border border-[#2a2a2a] bg-[#0f0f0f]/80 p-3 backdrop-blur">
-        <div className="flex items-center justify-between">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-white">
-            <Layers size={16} />
-            Layers
-          </h3>
-          <span className="text-xs font-medium text-white/50">{layers.length}</span>
-        </div>
-        <div className="mt-3 space-y-2">
-          {layers.length === 0 ? (
-            <p className="rounded-lg bg-[#1a1a1a] p-3 text-sm text-white/50">No canvas objects yet.</p>
-          ) : (
-            layers.map((layer) => (
-              <div key={layer.id} className="flex items-center justify-between gap-2 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-3 py-2">
-                <span className="truncate text-sm font-medium text-white/75">{layer.label}</span>
-                <button
-                  type="button"
-                  onClick={() => toggleLayer(layer)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/55 hover:bg-[#2a2a2a] hover:text-white"
-                  title={layer.visible ? 'Hide layer' : 'Show layer'}
-                >
-                  {layer.visible ? <Eye size={16} /> : <EyeOff size={16} />}
-                </button>
+                <Section title="Style">
+                  <div className="space-y-2">
+                    <ColorRow label="Stroke" value={(selected.stroke as string) || '#000000'} onChange={(v) => updateSelected({ stroke: v })} />
+                    <ColorRow label="Fill" value={(selected.fill as string) || 'transparent'} onChange={(v) => updateSelected({ fill: v })} />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-white/50">Stroke width</span>
+                      <input
+                        type="range" min={1} max={20} value={selected.strokeWidth ?? 2}
+                        onChange={(e) => updateSelected({ strokeWidth: Number(e.target.value) })}
+                        className="w-24 accent-violet-500"
+                      />
+                    </div>
+                  </div>
+                </Section>
+
+                <Section title="Align">
+                  <div className="grid grid-cols-3 gap-1">
+                    {[
+                      { icon: <AlignLeft size={14} />, dir: 'left' },
+                      { icon: <AlignCenter size={14} />, dir: 'center' },
+                      { icon: <AlignRight size={14} />, dir: 'right' },
+                      { icon: <AlignStartVertical size={14} />, dir: 'top' },
+                      { icon: <AlignCenterVertical size={14} />, dir: 'middle' },
+                      { icon: <AlignEndVertical size={14} />, dir: 'bottom' },
+                    ].map(({ icon, dir }) => (
+                      <button key={dir} onClick={() => align(dir)} className="flex items-center justify-center rounded-lg border border-[#2a2a2a] py-1.5 text-white/60 hover:bg-[#1a1a1a] hover:text-white transition-colors">
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                </Section>
+
+                <Section title="Actions">
+                  <div className="flex gap-2">
+                    <button onClick={() => duplicateObj(selected)} className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-[#2a2a2a] py-2 text-xs text-white/60 hover:bg-[#1a1a1a] hover:text-white transition-colors">
+                      <Copy size={12} /> Duplicate
+                    </button>
+                    <button onClick={() => deleteObj(selected)} className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/10 py-2 text-xs text-rose-400 hover:bg-rose-500/20 transition-colors">
+                      <Trash2 size={12} /> Delete
+                    </button>
+                  </div>
+                </Section>
+              </>
+            ) : (
+              <div className="flex h-32 items-center justify-center text-center">
+                <div>
+                  <Settings2 size={24} className="mx-auto mb-2 text-white/20" />
+                  <p className="text-xs text-white/40">Select an object to inspect its size, position, and colors.</p>
+                </div>
               </div>
-            ))
-          )}
-        </div>
-      </section>
+            )}
+          </>
+        ) : (
+          <>
+            <Section title={`Layers (${layers.length})`}>
+              {layers.length === 0 ? (
+                <p className="text-center text-xs text-white/40 py-4">No canvas objects yet.</p>
+              ) : (
+                <div className="space-y-1">
+                  {layers.map((obj, i) => {
+                    const isSelected = fabricRef.current?.getActiveObjects().includes(obj)
+                    const locked = (obj as any)._locked
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => selectLayer(obj)}
+                        className={cn(
+                          'group flex items-center gap-2 rounded-lg px-2 py-1.5 cursor-pointer transition-colors',
+                          isSelected ? 'bg-violet-600/20 text-white' : 'text-white/60 hover:bg-[#1a1a1a] hover:text-white'
+                        )}
+                      >
+                        <span className="flex-1 truncate text-xs capitalize">{(obj as any).type}</span>
+                        <div className="hidden group-hover:flex items-center gap-1">
+                          <button onClick={(e) => { e.stopPropagation(); toggleVisibility(obj) }} className="rounded p-0.5 hover:text-white">
+                            {obj.visible !== false ? <Eye size={11} /> : <EyeOff size={11} />}
+                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); toggleLock(obj) }} className="rounded p-0.5 hover:text-white">
+                            {locked ? <Lock size={11} /> : <Unlock size={11} />}
+                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); deleteObj(obj) }} className="rounded p-0.5 text-rose-400 hover:text-rose-300">
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </Section>
+          </>
+        )}
+      </div>
     </aside>
   )
 }
 
-function Property({ label, value, swatch }: { label: string; value: string; swatch?: string }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] p-2">
-      <div className="text-[11px] font-medium text-white/45">{label}</div>
-      <div className="mt-1 flex items-center gap-2 truncate font-semibold text-white">
-        {swatch && swatch !== 'transparent' ? (
-          <span className="h-3 w-3 shrink-0 rounded-full border border-white/20" style={{ backgroundColor: swatch }} />
-        ) : null}
-        <span className="truncate">{value || 'None'}</span>
-      </div>
+    <div>
+      <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-white/30">{title}</p>
+      {children}
     </div>
   )
 }
 
-function getSelectionProperties(object: fabric.Object): SelectionProperties {
-  const bounds = object.getBoundingRect(true, true)
-  const fill = normalizePaint(object.get('fill'))
-  const stroke = normalizePaint(object.get('stroke'))
-
-  return {
-    type: object.type ?? 'object',
-    left: Math.round(bounds.left),
-    top: Math.round(bounds.top),
-    width: Math.round(bounds.width),
-    height: Math.round(bounds.height),
-    fill,
-    stroke,
-  }
+function NumInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex items-center gap-1 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] px-2 py-1">
+      <span className="text-[10px] text-white/30 w-3">{label}</span>
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full bg-transparent text-right text-xs text-white outline-none"
+      />
+    </div>
+  )
 }
 
-function getObjectId(object: fabric.Object, index: number): string {
-  return (object as fabric.Object & { id?: string }).id ?? `${object.type ?? 'object'}-${index}`
-}
-
-function normalizePaint(value: unknown): string {
-  return typeof value === 'string' ? value : 'transparent'
+function ColorRow({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-white/50">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-mono text-white/40">{value}</span>
+        <div className="relative h-6 w-6 overflow-hidden rounded border border-white/20">
+          <div className="absolute inset-0" style={{ backgroundColor: value === 'transparent' ? '#fff' : value }} />
+          <input type="color" value={value === 'transparent' ? '#ffffff' : value} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+        </div>
+      </div>
+    </div>
+  )
 }

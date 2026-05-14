@@ -9,9 +9,19 @@ export function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) { return cookieStore.get(name)?.value },
-        set(name, value, options) { cookieStore.set({ name, value, ...options }) },
-        remove(name, options) { cookieStore.set({ name, value: '', ...options }) },
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // Called from Server Component — cookies can't be set here
+            // Middleware handles session refresh
+          }
+        },
       },
     }
   )

@@ -24,11 +24,15 @@ export type ToolType =
   | 'pen'
   | 'rectangle'
   | 'circle'
+  | 'triangle'
+  | 'diamond'
+  | 'arrow'
   | 'line'
   | 'text'
   | 'sticky'
   | 'eraser'
   | 'pan'
+  | 'image'
 
 export type CanvasEventType =
   | 'object:added'
