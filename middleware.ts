@@ -2,44 +2,55 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/callback')
+
+  // Skip middleware for home page and OAuth callback to avoid redirect loops
+  if (request.nextUrl.pathname === '/' || isAuthCallback) {
+    return NextResponse.next({ request: { headers: request.headers } })
+  }
+
   let response = NextResponse.next({ request: { headers: request.headers } })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder',
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name) { return request.cookies.get(name)?.value },
-        set(name, value, options) {
-          request.cookies.set({ name, value, ...options })
-          response = NextResponse.next({ request: { headers: request.headers } })
-          response.cookies.set({ name, value, ...options })
+        getAll() {
+          return request.cookies.getAll()
         },
-        remove(name, options) {
-          request.cookies.set({ name, value: '', ...options })
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value)
+          })
           response = NextResponse.next({ request: { headers: request.headers } })
-          response.cookies.set({ name, value: '', ...options })
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
         },
       },
     }
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/register')
 
-  // Skip middleware for home page to avoid redirect loops
-  if (request.nextUrl.pathname === '/') {
-    return response
+  if (!user && !isAuthPage) {
+    const redirectResponse = NextResponse.redirect(new URL('/login', request.url))
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie)
+    })
+    return redirectResponse
   }
 
-  if (!session && !isAuthPage) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  if (session && isAuthPage) {
-    return NextResponse.redirect(new URL('/', request.url))
+  if (user && isAuthPage) {
+    const redirectResponse = NextResponse.redirect(new URL('/', request.url))
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie)
+    })
+    return redirectResponse
   }
 
   return response

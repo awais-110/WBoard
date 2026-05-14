@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronDown, LogOut, Sparkles } from 'lucide-react'
+import { ChevronDown, LogOut } from 'lucide-react'
 
 interface UserProfile {
   email: string | null
@@ -53,49 +54,51 @@ export default function DashboardNavbar() {
   }
 
   return (
-    <div className="sticky top-0 z-30 border-b border-[#00A198]/20 bg-gradient-to-r from-[#E4DDD3]/40 to-white/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-5">
-        <div className="min-w-0 space-y-1">
-          <div className="flex items-center gap-2 text-[#00A198]">
-            <Sparkles size={16} />
-            <span className="text-xs font-bold uppercase tracking-[0.32em]">IdeaSpace</span>
+    <div className="sticky top-0 z-30 border-b border-[#0D0D0D]/10 bg-[#F7F5F0]/90 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
+        <Link href="/dashboard" className="flex min-w-0 items-center gap-3 text-[#0D0D0D]">
+          <div className="grid h-[38px] w-[38px] place-items-center rounded-[10px] border border-black/10 bg-[#0D0D0D] shadow-sm">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="6" height="6" rx="1.5" fill="#0ABFBC" />
+              <rect x="10" y="2" width="6" height="6" rx="1.5" fill="#F59E0B" />
+              <rect x="2" y="10" width="6" height="6" rx="1.5" fill="#8B5CF6" />
+              <rect x="10" y="10" width="6" height="6" rx="1.5" fill="#EC4899" />
+            </svg>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="bg-gradient-to-r from-[#00A198] to-[#008B7A] bg-clip-text text-2xl font-bold tracking-tight text-transparent">My Boards</h1>
-            <span className="animate-pulse rounded-full border border-[#00A198]/30 bg-[#00A198]/10 px-3 py-1 text-xs font-semibold text-[#00A198]">
-              Premium Workspace
-            </span>
+          <div className="grid min-w-0 leading-none">
+            <span className="truncate text-[18px] font-semibold tracking-tight sm:text-[22px]">IdeaSpace</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0D0D0D]/60">Workspace</span>
           </div>
-        </div>
+        </Link>
 
-        <div className="relative flex flex-wrap items-center gap-3" ref={menuRef}>
+        <div className="relative flex min-w-0 items-center gap-3" ref={menuRef}>
           <button
             type="button"
             onClick={() => setMenuOpen((open) => !open)}
-            className="group inline-flex items-center gap-3 rounded-full border border-[#00A198]/20 bg-gradient-to-r from-[#E4DDD3]/50 to-white/50 px-4 py-2 text-[#008B7A] shadow-lg shadow-[#00A198]/10 transition hover:border-[#00A198]/40 hover:from-[#E4DDD3]/70 hover:to-white/70"
+            className="group inline-flex min-w-0 items-center gap-2 rounded-full border border-[#0D0D0D]/10 bg-white/75 px-2 py-2 text-[#0D0D0D] shadow-[0_18px_45px_rgba(13,13,13,0.08)] transition hover:border-[#0ABFBC]/40 sm:gap-3 sm:px-3"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#00A198] to-[#008B7A] text-white shadow-lg">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0ABFBC] text-white shadow-lg shadow-[#0ABFBC]/20 sm:h-10 sm:w-10">
               <span className="text-sm font-bold">{user?.full_name?.charAt(0).toUpperCase() ?? '?'}</span>
             </div>
-            <div className="text-left">
-              <p className="truncate text-sm font-semibold text-[#008B7A]">{loading ? 'Loading...' : user?.full_name ?? 'Your profile'}</p>
-              <p className="truncate text-xs text-[#00A198]/60">{loading ? 'Getting email' : user?.email ?? 'No email available'}</p>
+            <div className="hidden min-w-0 text-left sm:block">
+              <p className="truncate text-sm font-bold text-[#0D0D0D]">{loading ? 'Loading...' : user?.full_name ?? 'Your profile'}</p>
+              <p className="hidden truncate text-xs text-[#0ABFBC] sm:block">{loading ? 'Getting email' : user?.email ?? 'No email available'}</p>
             </div>
-            <ChevronDown size={16} className={`transition duration-300 group-hover:text-[#00A198] ${menuOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown size={16} className={`transition duration-300 group-hover:text-[#0ABFBC] ${menuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-3 w-80 rounded-3xl border border-[#00A198]/20 bg-gradient-to-br from-[#E4DDD3]/30 to-white/80 p-5 shadow-2xl shadow-[#00A198]/20 backdrop-blur-sm">
-              <div className="space-y-3 rounded-2xl bg-white/50 p-4 text-sm">
-                <p className="font-bold text-[#008B7A]">Account</p>
-                <p className="truncate text-xs text-[#00A198]/70">{user?.email ?? 'No email available'}</p>
-                <p className="truncate text-xs text-[#00A198]/60">{user?.full_name ?? 'No profile name set'}</p>
+            <div className="absolute right-0 top-full mt-3 w-[min(20rem,calc(100vw-2rem))] rounded-[24px] border border-[#0D0D0D]/10 bg-[#F7F5F0] p-5 shadow-2xl shadow-black/15">
+              <div className="space-y-3 rounded-2xl border border-black/10 bg-white/70 p-4 text-sm">
+                <p className="font-bold text-[#0D0D0D]">Account</p>
+                <p className="truncate text-xs text-[#0D0D0D]/65">{user?.email ?? 'No email available'}</p>
+                <p className="truncate text-xs text-[#0ABFBC]">{user?.full_name ?? 'No profile name set'}</p>
               </div>
-              <div className="mt-5 border-t border-[#00A198]/10 pt-5">
+              <div className="mt-5 border-t border-[#0D0D0D]/10 pt-5">
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-300/50 bg-gradient-to-r from-rose-100/50 to-rose-50/50 px-4 py-2.5 text-sm font-semibold text-rose-700 shadow-md transition hover:border-rose-400/70 hover:from-rose-100 hover:to-rose-50"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0D0D0D] px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-black/10 transition hover:bg-[#0ABFBC]"
                 >
                   <LogOut size={16} />
                   Sign out

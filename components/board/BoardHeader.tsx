@@ -60,7 +60,7 @@ export default function BoardHeader({ board, canEdit, fabricRef }: BoardHeaderPr
 
   return (
     <header className="border-t border-[#2a2a2a] bg-[#1a1a1a]/95 backdrop-blur">
-      <div className="flex h-14 items-center gap-2 px-2 sm:h-12 sm:gap-3 sm:px-3 lg:px-4">
+      <div className="flex h-14 items-center gap-1.5 px-2 sm:h-12 sm:gap-3 sm:px-3 lg:px-4">
         <Link
           href="/"
           className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] text-white/70 transition-colors hover:bg-[#2a2a2a] hover:text-white sm:h-9 sm:w-9"
@@ -84,7 +84,7 @@ export default function BoardHeader({ board, canEdit, fabricRef }: BoardHeaderPr
               type="button"
               onClick={() => canEdit && setEditingTitle(true)}
               className={cn(
-                'group flex h-10 w-full max-w-xl items-center gap-2 rounded-lg px-2 text-left transition-colors sm:h-9 sm:gap-3 sm:px-3',
+                'group flex h-10 w-full max-w-xl items-center gap-2 rounded-lg px-1.5 text-left transition-colors sm:h-9 sm:gap-3 sm:px-3',
                 canEdit ? 'hover:bg-[#2a2a2a]' : 'cursor-default'
               )}
             >
@@ -129,7 +129,7 @@ export default function BoardHeader({ board, canEdit, fabricRef }: BoardHeaderPr
           {canEdit && (
             <button
               onClick={() => setShowInvite(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-violet-600 text-sm font-medium text-white transition-colors hover:bg-indigo-500 sm:h-9 sm:w-auto sm:gap-2 sm:px-3"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-sm font-medium text-white transition-colors hover:bg-indigo-500 sm:h-9 sm:w-auto sm:gap-2 sm:px-3"
               title="Share"
             >
               <Share2 size={15} />
@@ -138,7 +138,7 @@ export default function BoardHeader({ board, canEdit, fabricRef }: BoardHeaderPr
           )}
           <button
             onClick={() => setShowHistory(true)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] text-sm font-medium text-white/75 transition-colors hover:bg-[#2a2a2a] hover:text-white sm:h-9 sm:w-auto sm:gap-2 sm:px-3"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] text-sm font-medium text-white/75 transition-colors hover:bg-[#2a2a2a] hover:text-white sm:h-9 sm:w-auto sm:gap-2 sm:px-3"
             title="History"
           >
             <Clock size={15} />
@@ -146,7 +146,7 @@ export default function BoardHeader({ board, canEdit, fabricRef }: BoardHeaderPr
           </button>
           <button
             onClick={() => setShowAI(true)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] text-sm font-medium text-white/75 transition-colors hover:bg-[#2a2a2a] hover:text-white sm:h-9 sm:w-auto sm:gap-2 sm:px-3"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] text-sm font-medium text-white/75 transition-colors hover:bg-[#2a2a2a] hover:text-white sm:h-9 sm:w-auto sm:gap-2 sm:px-3"
             title="AI"
           >
             <Sparkles size={15} />

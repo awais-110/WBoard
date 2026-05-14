@@ -47,16 +47,16 @@ export default function NewBoardModal({ onClose }: NewBoardModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md">
-      <div className="w-full max-w-md rounded-[32px] border border-[#00A198]/15 bg-white p-6 shadow-2xl shadow-[#00A198]/15 transition-all">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0D0D0D]/55 p-4 backdrop-blur-md">
+      <div className="w-full max-w-md rounded-[24px] border border-[#0D0D0D]/10 bg-[#F7F5F0] p-6 shadow-2xl shadow-black/20 transition-all">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#008B7A]/80">New board</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">Create a workspace</h2>
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#0ABFBC]">New board</p>
+            <h2 className="mt-2 font-serif text-3xl font-semibold text-[#0D0D0D]">Create a workspace</h2>
           </div>
           <button
             onClick={onClose}
-            className="rounded-2xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            className="rounded-full p-2 text-[#0D0D0D]/50 transition hover:bg-white hover:text-[#0D0D0D]"
           >
             <X size={20} />
           </button>
@@ -68,7 +68,7 @@ export default function NewBoardModal({ onClose }: NewBoardModalProps) {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Enter board title..."
           autoFocus
-          className="mb-4 h-12 w-full rounded-3xl border border-[#00A198]/20 bg-[#F7FFFD] px-4 text-sm text-slate-900 outline-none placeholder:text-[#00A198]/40 focus:border-[#00A198] focus:ring-2 focus:ring-[#00A198]/20"
+          className="mb-4 h-12 w-full rounded-full border border-[#0D0D0D]/10 bg-white px-4 text-sm text-[#0D0D0D] outline-none placeholder:text-[#0D0D0D]/35 focus:border-[#0ABFBC] focus:ring-2 focus:ring-[#0ABFBC]/15"
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleCreate()
           }}
@@ -77,14 +77,14 @@ export default function NewBoardModal({ onClose }: NewBoardModalProps) {
         <div className="flex gap-2 justify-end">
           <button
             onClick={onClose}
-            className="h-9 rounded-lg px-4 text-sm font-medium text-white/65 transition-colors hover:bg-[#2a2a2a] hover:text-white"
+            className="h-10 rounded-full px-4 text-sm font-bold text-[#0D0D0D]/60 transition-colors hover:bg-white hover:text-[#0D0D0D]"
           >
             Cancel
           </button>
           <button
             onClick={handleCreate}
             disabled={loading}
-            className="flex h-9 items-center gap-2 rounded-lg bg-violet-600 px-4 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+            className="flex h-10 items-center gap-2 rounded-full bg-[#0D0D0D] px-5 text-sm font-bold text-white shadow-lg shadow-black/10 transition hover:bg-[#0ABFBC] disabled:opacity-50"
           >
             <Plus size={16} />
             {loading ? 'Creating...' : 'Create'}

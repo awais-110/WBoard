@@ -30,7 +30,7 @@ export default function ChatPanel() {
   }
 
   return (
-    <div className="absolute bottom-24 right-4 z-40 w-80 overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1a1a1a]/95 text-white shadow-2xl backdrop-blur">
+    <div className="absolute bottom-24 right-2 z-40 w-[calc(100vw-1rem)] max-w-80 overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#1a1a1a]/95 text-white shadow-2xl backdrop-blur sm:right-4 sm:w-80">
       <div className="flex items-center justify-between border-b border-[#2a2a2a] px-3 py-2">
         <div className="text-sm font-semibold text-white">Board Chat</div>
         <button onClick={toggle} className="rounded-lg p-1 text-white/55 hover:bg-[#2a2a2a] hover:text-white">

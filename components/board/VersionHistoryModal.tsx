@@ -66,8 +66,8 @@ export default function VersionHistoryModal({ boardId, fabricRef, onClose }: Ver
             <div className="rounded-lg bg-[#0f0f0f] p-3 text-sm text-white/50">No saved versions available.</div>
           ) : (
             snapshots.map((s, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] p-3">
-                <div>
+              <div key={i} className="flex flex-col gap-3 rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                   <div className="text-sm font-medium">{s.name ?? `Snapshot ${i + 1}`}</div>
                   <div className="text-xs text-white/45">{s.created_at ?? ''}</div>
                 </div>

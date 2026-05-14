@@ -10,8 +10,6 @@ function getErrorMessage(error: unknown) {
 }
 
 export async function sendVerificationEmail(email: string, verifyUrl: string): Promise<MailResult> {
-  // ...existing code...
-
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.EMAIL_FROM
 
@@ -52,7 +50,6 @@ export async function sendVerificationEmail(email: string, verifyUrl: string): P
       throw new Error(`Resend API error: ${message}`)
     }
 
-    // ...existing code...
     return { sent: true }
   } catch (error) {
     console.error('[mail] Verification email failed:', error)

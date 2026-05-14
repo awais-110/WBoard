@@ -102,6 +102,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [confirmVisible, setConfirmVisible] = useState(false)
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [serverError, setServerError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [shake, setShake] = useState(false)
@@ -257,7 +258,6 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
 
     try {
       if (mode === 'register') {
-        // ...existing code...
         const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -275,7 +275,6 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
           throw new Error(payload.error || 'Registration failed')
         }
 
-        // ...existing code...
         setMode('login')
         setFields({ fullName: '', email: fields.email, password: '', confirmPassword: '' })
         setTouched({ fullName: false, email: false, password: false, confirmPassword: false })
@@ -285,7 +284,6 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
         return
       }
 
-      // ...existing code...
       const { error } = await supabase.auth.signInWithPassword({
         email: fields.email.trim(),
         password: fields.password,
@@ -299,7 +297,6 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
         throw new Error(message)
       }
 
-      // ...existing code...
       setStatus('success')
       router.push('/dashboard')
       router.refresh()
@@ -310,43 +307,36 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
     }
   }
 
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true)
+    setServerError('')
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      })
+      console.log('[google] OAuth response:', data, error)
+      if (error) {
+        setServerError(error.message)
+        setGoogleLoading(false)
+      }
+      // If no error, browser will redirect to Google — no need to reset loading
+    } catch (err) {
+      console.error('[google] OAuth error:', err)
+      setServerError('Google login failed')
+      setGoogleLoading(false)
+    }
+  }
+
   return (
     <div className="auth-shell">
       <div className="auth-grid">
-        <aside className="hero-panel" aria-hidden="true">
-          <Link href="/" className="brand-home-link" aria-label="Back to IdeaSpace home">
-            <div className="brand-badge">I</div>
-            <p className="eyebrow">IDEASPACE</p>
-          </Link>
-
-          <div className="hero-content">
-            <h1>Build your board, shape your story.</h1>
-            <p className="hero-copy">
-              A polished workspace for teams who demand clarity, speed, and an elegant canvas.
-            </p>
-          </div>
-
-          <div className="decorative-cards">
-            <div className="floating-card card-one">
-              <div className="card-label">Project notes</div>
-              <div className="card-line" />
-              <div className="card-line short" />
-              <div className="card-line" />
-            </div>
-            <div className="floating-card card-two">
-              <div className="card-label">Brainstorm</div>
-              <div className="card-line" />
-              <div className="card-line" />
-            </div>
-            <div className="floating-card card-three">
-              <div className="card-label">Team sync</div>
-              <div className="card-line" />
-              <div className="card-line short" />
-              <div className="card-line" />
-            </div>
-          </div>
-        </aside>
-
         <main className="form-panel">
           <div className="auth-topbar">
             <Link href="/" className="auth-logo" aria-label="IdeaSpace home">
@@ -386,6 +376,48 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
                 <span>✓</span> {successMessage}
               </div>
             ) : null}
+
+            {/* Google Button - OUTSIDE form */}
+            <div style={{ marginBottom: '16px', display: 'grid', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={googleLoading}
+                style={{
+                  width: '100%',
+                  height: '42px',
+                  borderRadius: '100px',
+                  border: '1px solid #E0DDD6',
+                  background: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#0D0D0D',
+                  cursor: googleLoading ? 'not-allowed' : 'pointer',
+                  opacity: googleLoading ? 0.6 : 1,
+                }}
+              >
+                {googleLoading ? 'Redirecting...' : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                      <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                      <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                      <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
+                      <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/>
+                    </svg>
+                    Continue with Google
+                  </>
+                )}
+              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ flex: 1, height: '1px', background: '#E0DDD6' }} />
+                <span style={{ fontSize: '11px', color: '#88807A' }}>or</span>
+                <div style={{ flex: 1, height: '1px', background: '#E0DDD6' }} />
+              </div>
+            </div>
 
             <form className="auth-form" onSubmit={handleSubmit} noValidate>
               {mode === 'register' ? (
@@ -563,13 +595,12 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
       <style jsx>{`
         :global(html),
         :global(body) {
-          height: 100vh;
-          overflow: hidden;
+          min-height: 100%;
         }
 
         .auth-shell {
-          height: 100vh;
-          overflow: hidden;
+          min-height: 100vh;
+          overflow: auto;
           background: #F7F5F0;
           color: #0D0D0D;
           font-family: 'DM Sans', sans-serif;
@@ -577,147 +608,16 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
 
         .auth-grid {
           display: grid;
-          grid-template-columns: 42% 58%;
-          height: 100vh;
-          overflow: hidden;
-        }
-
-        .hero-panel {
-          height: 100vh;
-          padding: 40px;
-          background: #0D0D0D;
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          color: #FFFFFF;
-        }
-
-        :global(.brand-home-link) {
-          position: absolute;
-          top: 40px;
-          left: 40px;
-          z-index: 3;
-          display: inline-grid;
-          gap: 20px;
-          color: inherit;
-          text-decoration: none;
-          cursor: pointer;
-        }
-
-        :global(.brand-home-link):hover .eyebrow {
-          color: #FFFFFF;
-        }
-
-        .hero-content {
-          max-width: 360px;
-          position: relative;
-          z-index: 2;
-        }
-
-        .brand-badge {
-          width: 36px;
-          height: 36px;
-          border-radius: 12px;
-          display: grid;
-          place-items: center;
-          background: #0ABFBC;
-          font-size: 16px;
-          font-weight: 700;
-          color: white;
-          box-shadow: 0 16px 50px rgba(0, 0, 0, 0.18);
-        }
-
-        .eyebrow {
-          font-size: 16px;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #8BE9E0;
-          transition: color 0.2s ease;
-        }
-
-        .hero-content h1 {
-          margin: 0;
-          font-family: 'Instrument Serif', serif;
-          font-size: clamp(32px, 4vw, 52px);
-          line-height: 0.96;
-          max-width: 12rem;
-        }
-
-        .hero-copy {
-          margin-top: 18px;
-          max-width: 320px;
-          font-size: 13px;
-          line-height: 1.65;
-          color: #F7F5F0;
-          opacity: 0.92;
-        }
-
-        .decorative-cards {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-        }
-
-        .floating-card {
-          position: absolute;
-          width: min(180px, 28vw);
-          min-height: 104px;
-          border-radius: 16px;
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          backdrop-filter: blur(18px);
-          box-shadow: 0 32px 70px rgba(0, 0, 0, 0.22);
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .card-one {
-          top: 18%;
-          right: 10%;
-          transform: rotate(-4deg);
-        }
-
-        .card-two {
-          bottom: 18%;
-          left: 16%;
-          width: min(180px, 28vw);
-          transform: rotate(6deg);
-        }
-
-        .card-three {
-          top: 52%;
-          right: 20%;
-          transform: rotate(-2deg);
-        }
-
-        .card-label {
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-          color: #FFFFFF;
-          opacity: 0.95;
-        }
-
-        .card-line {
-          height: 7px;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.24);
-        }
-
-        .card-line.short {
-          width: 72%;
+          grid-template-columns: 1fr;
+          min-height: 100vh;
         }
 
         .form-panel {
-          height: 100vh;
+          min-height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
-          overflow: hidden;
-          padding: 24px;
+          padding: 88px 24px 32px;
           position: relative;
         }
 
@@ -775,20 +675,13 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
 
         .auth-card {
           width: min(420px, 100%);
-          max-height: calc(100vh - 48px);
           background: #F7F5F0;
           border: 1px solid #E0DDD6;
           border-radius: 16px;
           padding: 32px 36px;
           box-shadow: 0 20px 55px rgba(13, 13, 13, 0.08);
           position: relative;
-          overflow-y: auto;
-          scrollbar-width: none;
           transition: transform 0.2s ease;
-        }
-
-        .auth-card::-webkit-scrollbar {
-          display: none;
         }
 
         .auth-card.shake {
@@ -1073,25 +966,76 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
             grid-template-columns: 1fr;
           }
 
-          .hero-panel {
-            display: none;
-          }
-
           .auth-topbar {
-            position: static;
-            margin-bottom: 16px;
+            top: 16px;
+            left: 18px;
+            right: 18px;
             justify-content: center;
           }
 
           .form-panel {
-            padding: 18px 18px 12px;
+            align-items: flex-start;
+            padding: 96px 18px 28px;
           }
         }
 
         @media (max-width: 720px) {
+          .auth-shell {
+            min-height: 100dvh;
+          }
+
+          .auth-grid,
+          .form-panel {
+            min-height: 100dvh;
+          }
+
+          .auth-logo {
+            padding: 7px 10px;
+            border-radius: 14px;
+          }
+
+          .auth-logo-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+          }
+
           .auth-card {
-            max-height: calc(100vh - 36px);
-            padding: 28px 22px;
+            width: min(420px, 100%);
+            border-radius: 16px;
+            padding: 26px 20px 22px;
+            box-shadow: 0 16px 42px rgba(13, 13, 13, 0.08);
+          }
+
+          .form-header {
+            margin-bottom: 18px;
+          }
+
+          .form-header h2 {
+            font-size: 23px;
+          }
+
+          .form-subtitle {
+            font-size: 12px;
+          }
+
+          .auth-form {
+            gap: 13px;
+          }
+
+          .input-shell,
+          .input-shell input,
+          .submit-button {
+            height: 42px;
+          }
+
+          .submit-button {
+            margin-top: 16px;
+          }
+
+          .page-switch {
+            flex-wrap: wrap;
+            line-height: 1.4;
           }
         }
       `}</style>

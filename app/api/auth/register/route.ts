@@ -11,22 +11,18 @@ function getBaseUrl() {
 }
 
 export async function POST(request: Request) {
-  // ...existing code...
-
   try {
     const { email, password, name } = await request.json()
     const normalizedEmail = String(email || '').trim().toLowerCase()
     const fullName = String(name || '').trim()
 
     if (!normalizedEmail || !password || !fullName) {
-      // ...existing code...
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     const supabase = createAdminClient()
     const redirectTo = `${getBaseUrl()}/login?verified=true`
 
-    // ...existing code...
     const { data: signupLink, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'signup',
       email: normalizedEmail,
@@ -47,27 +43,19 @@ export async function POST(request: Request) {
       )
     }
 
-    // ...existing code...
     const mailResult = await sendVerificationEmail(normalizedEmail, signupLink.properties.action_link)
 
     if (!mailResult.sent) {
       console.error('[register] Verification email failed:', mailResult.error)
       if (signupLink.user?.id) {
-        const { error: deleteError } = await supabase.auth.admin.deleteUser(signupLink.user.id)
-        if (deleteError) {
-          console.error('[register] Cleanup after email failure failed:', deleteError)
-        }
+        await supabase.auth.admin.deleteUser(signupLink.user.id)
       }
-
       return NextResponse.json(
-        {
-          error: mailResult.error || 'Verification email could not be sent. Check the server email settings.',
-        },
+        { error: mailResult.error || 'Verification email could not be sent.' },
         { status: 500 }
       )
     }
 
-    // ...existing code...
     return NextResponse.json({
       success: true,
       message: 'Check your email to verify account',

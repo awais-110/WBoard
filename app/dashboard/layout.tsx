@@ -6,7 +6,7 @@ import DashboardNavbar from '@/components/dashboard/DashboardNavbar'
  */
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#F8F6F3] text-slate-900">
+    <div className="min-h-screen bg-[#F7F5F0] text-[#0D0D0D]">
       <DashboardNavbar />
       {children}
     </div>

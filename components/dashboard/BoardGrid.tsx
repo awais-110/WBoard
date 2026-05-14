@@ -39,10 +39,10 @@ export default function BoardGrid({
 
   if (boards.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm">
-        <div className="mx-auto h-14 w-20 rounded-xl border border-slate-200 bg-slate-50 shadow-sm" />
-        <h2 className="mt-4 text-lg font-semibold text-slate-900">{emptyTitle}</h2>
-        <p className="mt-1 text-sm text-slate-500">{emptyDescription}</p>
+      <div className="rounded-[24px] border border-dashed border-[#0D0D0D]/15 bg-white/55 px-6 py-12 text-center shadow-[0_18px_45px_rgba(13,13,13,0.05)]">
+        <div className="mx-auto h-14 w-20 rounded-2xl border border-[#0D0D0D]/10 bg-[#F7F5F0] shadow-sm" />
+        <h2 className="mt-4 font-serif text-2xl font-semibold text-[#0D0D0D]">{emptyTitle}</h2>
+        <p className="mt-1 text-sm text-[#0D0D0D]/55">{emptyDescription}</p>
       </div>
     )
   }
