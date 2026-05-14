@@ -310,11 +310,12 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true)
     setServerError('')
+    const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || window.location.origin).replace(/\/$/, '')
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${siteUrl}/auth/callback`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

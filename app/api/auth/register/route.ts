@@ -5,6 +5,7 @@ import { sendVerificationEmail } from '@/lib/mail'
 function getBaseUrl() {
   return (
     process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
     process.env.NEXTAUTH_URL ||
     'http://localhost:3000'
   ).replace(/\/$/, '')
