@@ -1,33 +1,14 @@
 'use client'
 
-import {
-  Circle,
-  Eraser,
-  Hand,
-  Minus,
-  MousePointer2,
-  Pencil,
-  RotateCcw,
-  RotateCw,
-  Square,
-  StickyNote,
-  Trash,
-  Trash2,
-  Type,
-} from 'lucide-react'
+import { ArrowRight, Circle, MousePointer2, Pencil, Square, Type } from 'lucide-react'
 import type { ElementType } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { cn } from '@/lib/utils'
 import { useCanvasStore } from '@/stores/canvasStore'
-import { useStickyStore } from '@/stores/stickyStore'
 import type { ToolType } from '@/types/canvas'
 
 interface LeftSidebarProps {
   canEdit: boolean
-  onUndo: () => void
-  onRedo: () => void
-  onClear: () => void
-  onDeleteSelected: () => void
 }
 
 const TOOLS: Array<{ type: ToolType; icon: ElementType; label: string; shortcut: string }> = [
@@ -35,19 +16,11 @@ const TOOLS: Array<{ type: ToolType; icon: ElementType; label: string; shortcut:
   { type: 'pen', icon: Pencil, label: 'Pen', shortcut: 'P' },
   { type: 'rectangle', icon: Square, label: 'Rectangle', shortcut: 'R' },
   { type: 'circle', icon: Circle, label: 'Circle', shortcut: 'O' },
-  { type: 'line', icon: Minus, label: 'Line', shortcut: 'L' },
+  { type: 'arrow', icon: ArrowRight, label: 'Arrow', shortcut: 'A' },
   { type: 'text', icon: Type, label: 'Text', shortcut: 'T' },
-  { type: 'eraser', icon: Eraser, label: 'Eraser', shortcut: 'E' },
-  { type: 'pan', icon: Hand, label: 'Pan', shortcut: 'H' },
 ]
 
-export default function LeftSidebar({
-  canEdit,
-  onUndo,
-  onRedo,
-  onClear,
-  onDeleteSelected,
-}: LeftSidebarProps) {
+export default function LeftSidebar({ canEdit }: LeftSidebarProps) {
   const {
     activeTool,
     setActiveTool,
@@ -69,93 +42,139 @@ export default function LeftSidebar({
       setStrokeWidth: state.setStrokeWidth,
     }))
   )
-  const addSticky = useStickyStore(useShallow((state) => state.add))
-
-  if (!canEdit) {
-    return (
-      <aside className="hidden w-14 shrink-0 border-r border-[#2a2a2a] bg-[#1a1a1a] px-2 py-3 text-white md:block">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#2a2a2a] text-xs font-semibold text-white/50" title="View only">
-          VO
-        </div>
-      </aside>
-    )
-  }
 
   return (
-    <aside className="hidden w-14 shrink-0 overflow-y-auto border-r border-[#2a2a2a] bg-[#1a1a1a] px-2 py-3 text-white md:block">
-      <section className="flex flex-col items-center gap-2">
-        {TOOLS.map(({ type, icon: Icon, label, shortcut }) => (
-          <button
-            key={type}
-            type="button"
-            title={`${label} (${shortcut})`}
-            onClick={() => setActiveTool(type)}
-            className={cn(
-              'inline-flex h-10 w-10 items-center justify-center rounded-lg text-white/75 transition-colors',
-              activeTool === type
-                ? 'bg-violet-600 text-white shadow-sm'
-                : 'hover:bg-[#2a2a2a] hover:text-white'
-            )}
-          >
-            <Icon size={18} />
-          </button>
-        ))}
+    <aside className="flex w-[76px] shrink-0 flex-col border-r border-black/[0.08] bg-[#fbfaf7]/90 px-2 py-2.5 backdrop-blur-md">
+      <div className="mt-2.5 rounded-[18px] border border-black/[0.08] bg-white/80 p-1.5 shadow-[0_10px_28px_rgba(13,13,13,0.04)]">
+        <div className="flex flex-col items-center gap-1">
+          {TOOLS.map(({ type, icon: Icon, label, shortcut }) => (
+            <ToolBtn
+              key={type}
+              active={activeTool === type}
+              onClick={() => setActiveTool(type)}
+              title={`${label} (${shortcut})`}
+            >
+              <Icon size={15} />
+            </ToolBtn>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-2 rounded-[18px] border border-black/[0.08] bg-white/80 p-1.5 shadow-[0_10px_28px_rgba(13,13,13,0.04)]">
+        <div className="mb-1.5 px-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#0d0d0d]/30">Style</div>
+        <div className="flex flex-col items-center gap-2">
+          <ColorPicker label="Stroke" value={strokeColor} onChange={setStrokeColor} transparent={false} />
+          <ColorPicker label="Fill" value={fillColor} onChange={setFillColor} transparent={fillColor === 'transparent'} allowTransparent />
+          <div className="flex flex-col items-center gap-1">
+            {[1, 2, 4, 8].map((width) => (
+              <button
+                key={width}
+                type="button"
+                onClick={() => setStrokeWidth(width)}
+                title={`${width}px`}
+                className={cn(
+                  'flex h-7 w-7 items-center justify-center rounded-full border transition-all',
+                  strokeWidth === width
+                    ? 'border-[#0abfbc]/30 bg-[#0abfbc]/15 text-[#0abfbc] shadow-sm'
+                    : 'border-black/[0.08] bg-white/90 text-[#0d0d0d]/60 hover:bg-black/[0.05]'
+                )}
+              >
+                <span className="rounded-full bg-current" style={{ width: Math.max(2, width * 1.4), height: Math.max(2, width * 1.4) }} />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+function ToolBtn({
+  children,
+  onClick,
+  title,
+  active,
+  danger,
+}: {
+  children: React.ReactNode
+  onClick?: () => void
+  title?: string
+  active?: boolean
+  danger?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={cn(
+        'flex h-9 w-9 items-center justify-center rounded-[16px] transition-all duration-150',
+        danger
+          ? 'text-red-400 hover:bg-red-50 hover:text-red-500'
+          : active
+          ? 'bg-[#0abfbc] text-white shadow-[0_12px_24px_rgba(10,191,188,0.25)]'
+          : 'text-[#0d0d0d]/50 hover:bg-black/[0.05] hover:text-[#0d0d0d]'
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+function ColorPicker({
+  label,
+  value,
+  onChange,
+  transparent,
+  allowTransparent,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  transparent: boolean
+  allowTransparent?: boolean
+}) {
+  const inputId = `${label.toLowerCase()}-picker`
+
+  return (
+    <div className="flex w-full flex-col items-center gap-1">
+      <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[#0d0d0d]/32">{label}</div>
+      <div className="relative h-7 w-7 overflow-hidden rounded-xl border border-black/[0.08] bg-white shadow-[0_10px_18px_rgba(13,13,13,0.04)]">
         <button
           type="button"
-          title="Sticky note (N)"
-          onClick={() => addSticky()}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-white/75 transition-colors hover:bg-[#2a2a2a] hover:text-white"
+          onClick={() => document.getElementById(inputId)?.click()}
+          className="absolute inset-0"
+          aria-label={label}
         >
-          <StickyNote size={18} />
+          <span className="absolute inset-0" style={{ backgroundColor: transparent ? '#ffffff' : value }} />
+          {transparent && (
+            <svg className="absolute inset-0 h-full w-full" viewBox="0 0 32 32">
+              <line x1="4" y1="28" x2="28" y2="4" stroke="#ef4444" strokeWidth="2" />
+            </svg>
+          )}
         </button>
-      </section>
-
-      <section className="mt-4 flex flex-col items-center gap-2 border-t border-[#2a2a2a] pt-4">
-        <label className="flex items-center justify-between gap-3 text-xs font-medium text-slate-300">
-          <input
-            aria-label="Stroke color"
-            type="color"
-            value={strokeColor}
-            onChange={(event) => setStrokeColor(event.target.value)}
-            className="h-8 w-8 cursor-pointer rounded-full border border-[#2a2a2a] bg-transparent p-1"
-          />
-        </label>
-        <label className="flex items-center justify-between gap-3 text-xs font-medium text-slate-300">
-          <input
-            aria-label="Fill color"
-            type="color"
-            value={fillColor === 'transparent' ? '#ffffff' : fillColor}
-            onChange={(event) => setFillColor(event.target.value)}
-            className="h-8 w-8 cursor-pointer rounded-full border border-[#2a2a2a] bg-transparent p-1"
-          />
-        </label>
-        <label className="flex h-24 items-center">
-          <input
-            aria-label="Stroke width"
-            type="range"
-            min={1}
-            max={48}
-            value={strokeWidth}
-            onChange={(event) => setStrokeWidth(Number(event.target.value))}
-            className="h-2 w-20 rotate-[-90deg] cursor-pointer accent-violet-600"
-          />
-        </label>
-      </section>
-
-      <section className="mt-4 flex flex-col items-center gap-2 border-t border-[#2a2a2a] pt-4">
-        <button type="button" onClick={onUndo} className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-white/75 hover:bg-[#2a2a2a] hover:text-white" title="Undo (Ctrl+Z)">
-          <RotateCcw size={18} />
+        <input
+          id={inputId}
+          type="color"
+          value={transparent ? '#ffffff' : value}
+          onChange={(event) => onChange(event.target.value)}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        />
+      </div>
+      {allowTransparent && (
+        <button
+          type="button"
+          onClick={() => onChange('transparent')}
+          className={cn(
+            'rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors',
+            transparent
+              ? 'bg-[#0abfbc]/15 text-[#0abfbc]'
+              : 'text-[#0d0d0d]/45 hover:bg-black/[0.05]'
+          )}
+        >
+          Transparent
         </button>
-        <button type="button" onClick={onRedo} className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-white/75 hover:bg-[#2a2a2a] hover:text-white" title="Redo (Ctrl+Shift+Z)">
-          <RotateCw size={18} />
-        </button>
-        <button type="button" onClick={onDeleteSelected} className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-rose-300 hover:bg-rose-500/20" title="Delete selected">
-          <Trash2 size={18} />
-        </button>
-        <button type="button" onClick={onClear} className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-white/75 hover:bg-[#2a2a2a] hover:text-white" title="Clear canvas">
-          <Trash size={18} />
-        </button>
-      </section>
-    </aside>
+      )}
+    </div>
   )
 }

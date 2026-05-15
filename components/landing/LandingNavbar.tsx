@@ -30,14 +30,11 @@ export default function LandingNavbar() {
         </Link>
 
         <div className="hidden items-center gap-10 md:flex">
-          <a href="#why" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
+          <Link href="/#why" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
             Why
-          </a>
-          <a href="#canvas" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
+          </Link>
+          <Link href="/#canvas" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
             Canvas
-          </a>
-          <Link href="/register" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
-            Start
           </Link>
         </div>
 
@@ -66,12 +63,12 @@ export default function LandingNavbar() {
       {menuOpen && (
         <div className="border-t border-black/8 bg-[#f7f5f0]/95 px-4 pb-4 sm:px-6 md:hidden">
           <div className="flex flex-col gap-3 pt-4">
-            <a href="#why" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
+            <Link href="/#why" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
               Why
-            </a>
-            <a href="#canvas" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
+            </Link>
+            <Link href="/#canvas" className="text-sm font-medium text-[#0d0d0d] transition hover:text-[#0abfbc]">
               Canvas
-            </a>
+            </Link>
             <Link
               href="/register"
               className="rounded-2xl bg-[#0d0d0d] px-4 py-3 text-center text-sm font-bold text-[#f7f5f0]"

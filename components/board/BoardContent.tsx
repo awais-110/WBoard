@@ -3,12 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useHistory } from '@/hooks/useHistory'
 import Canvas from './Canvas'
-import BoardHeader from './BoardHeader'
-import TopNavbar from '@/components/ui/TopNavbar'
-import LeftSidebar from '@/components/ui/LeftSidebar'
-import RightSidebar from '@/components/ui/RightSidebar'
-import BottomToolbar from '@/components/ui/BottomToolbar'
-import CollaborationPanel from '@/components/ui/CollaborationPanel'
+import TopNavbar from '../ui/TopNavbar'
+import LeftSidebar from '../ui/LeftSidebar'
+import RightSidebar from '../ui/RightSidebar'
+import BottomToolbar from '../ui/BottomToolbar'
 import StickyNotesLayer from '@/components/sticky/StickyNotesLayer'
 import ChatPanel from '@/components/chat/ChatPanel'
 import CommentsPanel from '@/components/comments/CommentsPanel'
@@ -82,33 +80,27 @@ export default function BoardContent({ board, canEdit }: BoardContentProps) {
   }, [undo, redo, handleDeleteSelected])
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-[#0f0f0f] text-white">
-      <div className="fixed inset-x-0 top-0 z-50 border-b border-[#2a2a2a] bg-[#0f0f0f]/95 shadow-sm backdrop-blur">
-        <TopNavbar boardName={board.title || 'Board'} />
-        <BoardHeader board={board} canEdit={canEdit} fabricRef={fabricRef} />
+    <div className="h-[100dvh] overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(10,191,188,0.08),_transparent_28%),linear-gradient(180deg,#faf8f4_0%,#f3efe8_100%)] text-[#0d0d0d]">
+      <div className="fixed inset-x-0 top-0 z-50 border-b border-black/[0.08] bg-[#f7f5f0]/90 shadow-[0_10px_30px_rgba(13,13,13,0.06)] backdrop-blur-xl">
+        <TopNavbar boardName={board.title || 'Board'} boardId={board.id} canEdit={canEdit} onUndo={handleUndo} onRedo={handleRedo} onClear={handleClear} />
       </div>
 
-      <div className="flex h-full min-h-0 pt-14 sm:pt-24">
-        <LeftSidebar
-          canEdit={canEdit}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          onClear={handleClear}
-          onDeleteSelected={handleDeleteSelected}
-        />
+      <div className="flex h-full min-h-0 pt-14 sm:pt-14">
+        <LeftSidebar canEdit={canEdit} />
 
-        <main className="relative min-w-0 flex-1 overflow-hidden bg-[#0f0f0f] p-1.5 pb-24 sm:p-3">
-          <div className="relative h-full overflow-hidden rounded-lg border border-[#2a2a2a] bg-white shadow-2xl sm:rounded-xl">
-            <Canvas
-              boardId={board.id}
-              initialData={board.canvas_data}
-              canEdit={canEdit}
-              onCanvasReady={handleCanvasReady}
-            />
-            <StickyNotesLayer />
+        <main className="relative min-w-0 flex-1 overflow-hidden p-3 sm:p-4">
+          <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border border-black/[0.08] bg-white shadow-[0_24px_80px_rgba(13,13,13,0.08)]">
+            <div className="relative min-h-0 flex-1 overflow-hidden bg-[#fbfaf7]">
+              <Canvas
+                boardId={board.id}
+                initialData={board.canvas_data}
+                canEdit={canEdit}
+                onCanvasReady={handleCanvasReady}
+              />
+              <StickyNotesLayer />
+            </div>
+            <BottomToolbar fabricRef={fabricRef} onUndo={handleUndo} onRedo={handleRedo} onDeleteSelected={handleDeleteSelected} onClear={handleClear} canEdit={canEdit} />
           </div>
-          <BottomToolbar fabricRef={fabricRef} onUndo={handleUndo} onRedo={handleRedo} />
-          <CollaborationPanel />
           <ChatPanel />
           <CommentsPanel />
         </main>
@@ -118,6 +110,7 @@ export default function BoardContent({ board, canEdit }: BoardContentProps) {
           isCollapsed={isRightSidebarCollapsed}
           onToggleCollapse={() => setIsRightSidebarCollapsed((collapsed) => !collapsed)}
         />
+
       </div>
     </div>
   )

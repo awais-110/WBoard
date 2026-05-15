@@ -1,9 +1,11 @@
+
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import LandingNavbar from '@/components/landing/LandingNavbar'
 
 type AuthMode = 'login' | 'register'
 
@@ -336,25 +338,17 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
   }
 
   return (
+
+
+    
     <div className="auth-shell">
       <div className="auth-grid">
+        <LandingNavbar />
+
         <main className="form-panel">
-          <div className="auth-topbar">
-            <Link href="/" className="auth-logo" aria-label="IdeaSpace home">
-              <div className="auth-logo-badge">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="2" y="2" width="6" height="6" rx="1.5" fill="#0ABFBC"/>
-                  <rect x="10" y="2" width="6" height="6" rx="1.5" fill="#F59E0B"/>
-                  <rect x="2" y="10" width="6" height="6" rx="1.5" fill="#8B5CF6"/>
-                  <rect x="10" y="10" width="6" height="6" rx="1.5" fill="#EC4899"/>
-                </svg>
-              </div>
-              <div className="auth-logo-copy">
-                <span>IdeaSpace</span>
-                <span>Workspace</span>
-              </div>
-            </Link>
-          </div>
+
+
+          
           <div className={`auth-card ${shake ? 'shake' : ''}`}>
             <div className="form-header">
               <p className="form-eyebrow">{mode === 'login' ? 'Sign in to IdeaSpace' : 'Create your IdeaSpace account'}</p>
@@ -639,21 +633,22 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
           text-decoration: none;
           color: inherit;
           padding: 8px 12px;
-          border-radius: 16px;
-          background: rgba(255,255,255,0.9);
-          border: 1px solid rgba(13,13,13,0.08);
-          box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+          border-radius: 12px;
+          background: rgba(255,255,255,0.95);
+          border: 1px solid rgba(13,13,13,0.06);
+          box-shadow: 0 8px 26px rgba(0,0,0,0.06);
         }
 
         .auth-logo-badge {
-          width: 38px;
-          height: 38px;
-          border-radius: 12px;
+          width: 42px;
+          height: 42px;
+          border-radius: 10px;
           background: #0D0D0D;
           display: grid;
           place-items: center;
           border: 1px solid rgba(0,0,0,0.12);
           flex-shrink: 0;
+          box-shadow: 0 8px 20px rgba(13,13,13,0.06);
         }
 
         .auth-logo-copy {
@@ -663,7 +658,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
         }
 
         .auth-logo-copy span:first-child {
-          font-size: 15px;
+          font-size: 16px;
           font-weight: 700;
         }
 
@@ -675,12 +670,13 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
         }
 
         .auth-card {
-          width: min(420px, 100%);
-          background: #F7F5F0;
-          border: 1px solid #E0DDD6;
-          border-radius: 16px;
-          padding: 32px 36px;
-          box-shadow: 0 20px 55px rgba(13, 13, 13, 0.08);
+          width: min(460px, 100%);
+          max-width: 520px;
+          background: #FFFFFF;
+          border: 1px solid #E6E0D8;
+          border-radius: 18px;
+          padding: 36px 42px;
+          box-shadow: 0 30px 60px rgba(13, 13, 13, 0.06);
           position: relative;
           transition: transform 0.2s ease;
         }
@@ -924,18 +920,20 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
         }
 
         .submit-button.disabled {
-          background: #D8D1C8;
-          color: #7B746D;
+          background: #E9E5E0;
+          color: #9A938A;
           cursor: not-allowed;
         }
 
+        /* Beige primary style like the screenshot */
         .submit-button.active {
-          background: #0D0D0D;
-          color: #FFFFFF;
+          background: #D8D1C8;
+          color: #44403b;
         }
 
         .submit-button.active:hover {
-          background: #0ABFBC;
+          transform: translateY(-2px);
+          box-shadow: 0 12px 30px rgba(13,13,13,0.06);
         }
 
         .submit-button.success {

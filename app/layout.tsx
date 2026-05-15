@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
+import ScrollToHash from '@/components/ScrollToHash'
 
 export const metadata: Metadata = {
   title: "IdeaSpace - Collaborate, Create, Innovate",
@@ -19,6 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         {children}
+        <ScrollToHash />
         <Toaster position="top-right" />
       </body>
     </html>

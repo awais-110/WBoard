@@ -1,244 +1,185 @@
 'use client'
 
+import { Maximize2, Minus, Plus, RotateCcw, RotateCw, Eraser, StickyNote, Trash2, Trash } from 'lucide-react'
+import { fabric } from 'fabric'
+import { useShallow } from 'zustand/react/shallow'
 import { useCanvasStore } from '@/stores/canvasStore'
-import { useHistory } from '@/hooks/useHistory'
-import {
-  MousePointer2, Pencil, Square, Circle, Triangle, Minus,
-  Type, StickyNote, Eraser, Hand, Image, ArrowRight,
-  Diamond, Undo2, Redo2, ZoomIn, ZoomOut, Maximize2, Grid3x3,
-  Magnet, Trash2
-} from 'lucide-react'
-import type { fabric } from 'fabric'
-import type { ToolType } from '@/types/canvas'
+import { useStickyStore } from '@/stores/stickyStore'
 import { cn } from '@/lib/utils'
-import { useRef, useState } from 'react'
 
 interface BottomToolbarProps {
   fabricRef: React.MutableRefObject<fabric.Canvas | null>
-  onUndo: () => void
-  onRedo: () => void
+  onUndo?: () => void
+  onRedo?: () => void
   onDeleteSelected?: () => void
+  onClear?: () => void
+  canEdit?: boolean
 }
 
-const TOOLS: { id: ToolType; icon: React.ReactNode; label: string; shortcut: string }[] = [
-  { id: 'select', icon: <MousePointer2 size={16} />, label: 'Select', shortcut: 'V' },
-  { id: 'pen', icon: <Pencil size={16} />, label: 'Pen', shortcut: 'P' },
-  { id: 'rectangle', icon: <Square size={16} />, label: 'Rectangle', shortcut: 'R' },
-  { id: 'circle', icon: <Circle size={16} />, label: 'Circle', shortcut: 'O' },
-  { id: 'triangle', icon: <Triangle size={16} />, label: 'Triangle', shortcut: 'T' },
-  { id: 'diamond', icon: <Diamond size={16} />, label: 'Diamond', shortcut: '' },
-  { id: 'arrow', icon: <ArrowRight size={16} />, label: 'Arrow', shortcut: '' },
-  { id: 'line', icon: <Minus size={16} />, label: 'Line', shortcut: 'L' },
-  { id: 'text', icon: <Type size={16} />, label: 'Text', shortcut: 'T' },
-  { id: 'sticky', icon: <StickyNote size={16} />, label: 'Sticky', shortcut: '' },
-  { id: 'image', icon: <Image size={16} />, label: 'Image', shortcut: '' },
-  { id: 'eraser', icon: <Eraser size={16} />, label: 'Eraser', shortcut: 'E' },
-  { id: 'pan', icon: <Hand size={16} />, label: 'Pan', shortcut: 'H' },
-]
+export default function BottomToolbar({
+  fabricRef,
+  onUndo,
+  onRedo,
+  onDeleteSelected,
+  onClear,
+  canEdit = false,
+}: BottomToolbarProps) {
+  const zoom = useCanvasStore((state) => state.zoom)
+  const setZoom = useCanvasStore((state) => state.setZoom)
+  const setActiveTool = useCanvasStore((state) => state.setActiveTool)
+  const addSticky = useStickyStore(useShallow((state) => state.add))
 
-export default function BottomToolbar({ fabricRef, onUndo, onRedo, onDeleteSelected }: BottomToolbarProps) {
-  const { activeTool, setActiveTool, showGrid, snapToGrid, toggleGrid, toggleSnap,
-    strokeColor, setStrokeColor, fillColor, setFillColor, strokeWidth, setStrokeWidth } = useCanvasStore()
-  const [zoom, setZoom] = useState(100)
-  const strokeInputRef = useRef<HTMLInputElement>(null)
-  const fillInputRef = useRef<HTMLInputElement>(null)
-
-  const handleZoomIn = () => {
+  const updateZoom = (nextZoom: number) => {
     const canvas = fabricRef.current
     if (!canvas) return
-    const z = Math.min(500, Math.round(canvas.getZoom() * 110))
-    canvas.setZoom(z / 100)
+    const clamped = clampZoom(nextZoom)
+    canvas.zoomToPoint(new fabric.Point(canvas.getWidth() / 2, canvas.getHeight() / 2), clamped)
     canvas.requestRenderAll()
-    setZoom(z)
+    setZoom(clamped)
   }
 
-  const handleZoomOut = () => {
-    const canvas = fabricRef.current
-    if (!canvas) return
-    const z = Math.max(10, Math.round(canvas.getZoom() * 91))
-    canvas.setZoom(z / 100)
-    canvas.requestRenderAll()
-    setZoom(z)
-  }
-
-  const handleZoomFit = () => {
+  const handleZoomIn = () => updateZoom(zoom / 0.95)
+  const handleZoomOut = () => updateZoom(zoom * 0.95)
+  const handleReset = () => updateZoom(1)
+  const handleFit = () => {
     const canvas = fabricRef.current
     if (!canvas) return
     canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
     canvas.setZoom(1)
     canvas.requestRenderAll()
-    setZoom(100)
+    setZoom(1)
+  }
+
+  const handleSticky = () => {
+    if (!canEdit) return
+    setActiveTool('sticky')
+    addSticky()
+  }
+
+  const handleEraser = () => {
+    if (!canEdit) return
+    setActiveTool('eraser')
   }
 
   return (
-    <div className="absolute bottom-4 left-1/2 z-40 -translate-x-1/2">
-      <div className="flex items-center gap-2 rounded-2xl border border-[#2a2a2a] bg-[#0f0f0f]/95 px-3 py-2 shadow-2xl backdrop-blur-xl">
-
-        {/* Tools */}
-        <div className="flex items-center gap-0.5">
-          {TOOLS.map((tool) => (
-            <Tooltip key={tool.id} label={`${tool.label}${tool.shortcut ? ` (${tool.shortcut})` : ''}`}>
-              <button
-                onClick={() => setActiveTool(tool.id)}
-                className={cn(
-                  'relative flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-150',
-                  activeTool === tool.id
-                    ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
-                    : 'text-white/60 hover:bg-[#2a2a2a] hover:text-white'
-                )}
-              >
-                {tool.icon}
-              </button>
-            </Tooltip>
-          ))}
-        </div>
-
-        <div className="h-6 w-px bg-[#2a2a2a]" />
-
-        {/* Colors */}
-        <div className="flex items-center gap-2">
-          <Tooltip label="Stroke color">
-            <div className="relative">
-              <button
-                onClick={() => strokeInputRef.current?.click()}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-white/20 shadow-inner"
-                style={{ backgroundColor: strokeColor }}
-              />
-              <input
-                ref={strokeInputRef}
-                type="color"
-                value={strokeColor}
-                onChange={(e) => setStrokeColor(e.target.value)}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-              />
-            </div>
-          </Tooltip>
-
-          <Tooltip label="Fill color">
-            <div className="relative">
-              <button
-                onClick={() => fillInputRef.current?.click()}
-                className="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-white/20"
-                style={{ backgroundColor: fillColor === 'transparent' ? '#ffffff' : fillColor }}
-              >
-                {fillColor === 'transparent' && (
-                  <svg className="absolute inset-0 h-full w-full rounded-lg" viewBox="0 0 28 28">
-                    <line x1="0" y1="28" x2="28" y2="0" stroke="#ef4444" strokeWidth="2" />
-                  </svg>
-                )}
-              </button>
-              <input
-                ref={fillInputRef}
-                type="color"
-                value={fillColor === 'transparent' ? '#ffffff' : fillColor}
-                onChange={(e) => setFillColor(e.target.value)}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-              />
-            </div>
-          </Tooltip>
-
-          {/* Stroke width */}
-          <div className="flex items-center gap-1.5">
-            {[1, 2, 4, 8].map((w) => (
-              <Tooltip key={w} label={`${w}px`}>
-                <button
-                  onClick={() => setStrokeWidth(w)}
-                  className={cn(
-                    'flex h-7 w-7 items-center justify-center rounded-lg transition-all',
-                    strokeWidth === w ? 'bg-[#2a2a2a] ring-1 ring-violet-500' : 'hover:bg-[#1a1a1a]'
-                  )}
-                >
-                  <div className="rounded-full bg-white" style={{ width: Math.max(2, w * 1.5), height: Math.max(2, w * 1.5) }} />
-                </button>
-              </Tooltip>
-            ))}
-          </div>
-        </div>
-
-        <div className="h-6 w-px bg-[#2a2a2a]" />
-
-        {/* Undo / Redo */}
-        <div className="flex items-center gap-0.5">
-          <Tooltip label="Undo (Ctrl+Z)">
-            <button onClick={onUndo} className="flex h-9 w-9 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-[#2a2a2a] hover:text-white">
-              <Undo2 size={16} />
-            </button>
-          </Tooltip>
-          <Tooltip label="Redo (Ctrl+Shift+Z)">
-            <button onClick={onRedo} className="flex h-9 w-9 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-[#2a2a2a] hover:text-white">
-              <Redo2 size={16} />
-            </button>
-          </Tooltip>
-        </div>
-
-        <div className="h-6 w-px bg-[#2a2a2a]" />
-
-        {/* Zoom */}
-        <div className="flex items-center gap-0.5">
-          <Tooltip label="Zoom out">
-            <button onClick={handleZoomOut} className="flex h-9 w-9 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-[#2a2a2a] hover:text-white">
-              <ZoomOut size={16} />
-            </button>
-          </Tooltip>
-          <button onClick={handleZoomFit} className="min-w-[52px] rounded-lg px-2 py-1 text-xs font-mono font-medium text-white/60 transition-all hover:bg-[#2a2a2a] hover:text-white">
-            {zoom}%
-          </button>
-          <Tooltip label="Zoom in">
-            <button onClick={handleZoomIn} className="flex h-9 w-9 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-[#2a2a2a] hover:text-white">
-              <ZoomIn size={16} />
-            </button>
-          </Tooltip>
-          <Tooltip label="Fit to screen">
-            <button onClick={handleZoomFit} className="flex h-9 w-9 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-[#2a2a2a] hover:text-white">
-              <Maximize2 size={16} />
-            </button>
-          </Tooltip>
-        </div>
-
-        <div className="h-6 w-px bg-[#2a2a2a]" />
-
-        {/* Grid & Snap */}
-        <div className="flex items-center gap-0.5">
-          <Tooltip label="Toggle grid">
-            <button
-              onClick={toggleGrid}
-              className={cn('flex h-9 w-9 items-center justify-center rounded-xl transition-all', showGrid ? 'bg-violet-600/20 text-violet-400' : 'text-white/60 hover:bg-[#2a2a2a] hover:text-white')}
-            >
-              <Grid3x3 size={16} />
-            </button>
-          </Tooltip>
-          <Tooltip label="Snap to grid">
-            <button
-              onClick={toggleSnap}
-              className={cn('flex h-9 w-9 items-center justify-center rounded-xl transition-all', snapToGrid ? 'bg-violet-600/20 text-violet-400' : 'text-white/60 hover:bg-[#2a2a2a] hover:text-white')}
-            >
-              <Magnet size={16} />
-            </button>
-          </Tooltip>
-        </div>
-
-        {onDeleteSelected && (
-          <>
-            <div className="h-6 w-px bg-[#2a2a2a]" />
-            <Tooltip label="Delete selected">
-              <button onClick={onDeleteSelected} className="flex h-9 w-9 items-center justify-center rounded-xl text-rose-400/70 transition-all hover:bg-rose-500/10 hover:text-rose-400">
-                <Trash2 size={16} />
-              </button>
-            </Tooltip>
-          </>
+    <div className="pointer-events-none absolute inset-x-0 bottom-4 z-40 flex justify-center px-3">
+      <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-white/92 px-2 py-1.5 shadow-[0_16px_40px_rgba(13,13,13,0.08)] backdrop-blur-xl">
+        {canEdit && (
+          <DockGroup>
+            <DockBtn onClick={handleSticky} title="Sticky note" active>
+              <StickyNote size={13} />
+            </DockBtn>
+            <DockBtn onClick={handleEraser} title="Eraser">
+              <Eraser size={13} />
+            </DockBtn>
+          </DockGroup>
         )}
+
+        {canEdit && (onUndo || onRedo || onDeleteSelected || onClear) && <DockDivider />}
+
+        {canEdit && (
+          <DockGroup>
+            <DockBtn onClick={onUndo} title="Undo">
+              <RotateCcw size={13} />
+            </DockBtn>
+            <DockBtn onClick={onRedo} title="Redo">
+              <RotateCw size={13} />
+            </DockBtn>
+            <DockBtn onClick={onDeleteSelected} title="Delete selection" danger>
+              <Trash2 size={13} />
+            </DockBtn>
+            <DockBtn onClick={onClear} title="Clear canvas" danger>
+              <Trash size={13} />
+            </DockBtn>
+          </DockGroup>
+        )}
+
+        <DockDivider />
+
+        <div className="flex items-center gap-1">
+          <ZoomBtn onClick={handleZoomOut} title="Zoom out">
+            <Minus size={13} />
+          </ZoomBtn>
+
+          <button
+            type="button"
+            onClick={handleReset}
+            title="Reset zoom"
+            className="min-w-[58px] rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums text-[#0d0d0d]/65 transition-colors hover:bg-black/[0.05] hover:text-[#0d0d0d]"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+
+          <ZoomBtn onClick={handleZoomIn} title="Zoom in">
+            <Plus size={13} />
+          </ZoomBtn>
+
+          <DockDivider compact />
+
+          <ZoomBtn onClick={handleFit} title="Fit to screen">
+            <Maximize2 size={13} />
+          </ZoomBtn>
+        </div>
       </div>
     </div>
   )
 }
 
-function Tooltip({ label, children }: { label: string; children: React.ReactNode }) {
+function DockGroup({ children }: { children: React.ReactNode }) {
+  return <div className="flex items-center gap-1">{children}</div>
+}
+
+function DockDivider({ compact = false }: { compact?: boolean }) {
+  return <div className={cn('mx-0.5 w-px bg-black/10', compact ? 'h-3.5' : 'h-5')} />
+}
+
+function ZoomBtn({ children, onClick, title }: { children: React.ReactNode; onClick?: () => void; title?: string }) {
   return (
-    <div className="group relative">
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={cn(
+        'flex h-7 w-7 items-center justify-center rounded-full text-[#0d0d0d]/50 transition-all hover:bg-black/[0.05] hover:text-[#0d0d0d]'
+      )}
+    >
       {children}
-      <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[#1a1a1a] px-2 py-1 text-xs text-white/80 opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
-        {label}
-      </div>
-    </div>
+    </button>
   )
+}
+
+function DockBtn({
+  children,
+  onClick,
+  title,
+  active,
+  danger,
+}: {
+  children: React.ReactNode
+  onClick?: () => void
+  title?: string
+  active?: boolean
+  danger?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={cn(
+        'flex h-7 w-7 items-center justify-center rounded-full transition-all',
+        danger
+          ? 'text-red-400 hover:bg-red-50 hover:text-red-500'
+          : active
+          ? 'bg-[#0abfbc]/15 text-[#0abfbc]'
+          : 'text-[#0d0d0d]/50 hover:bg-black/[0.05] hover:text-[#0d0d0d]'
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+function clampZoom(value: number): number {
+  return Math.min(5, Math.max(0.05, value))
 }

@@ -1,12 +1,44 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { fabric } from 'fabric'
+import { useShallow } from 'zustand/react/shallow'
+import { createClient } from '@/lib/supabase/client'
 import { useCanvasStore } from '@/stores/canvasStore'
 import { useSaveStore } from '@/stores/saveStore'
-import { broadcastCanvasEvent } from '@/lib/fabric/tools'
-import type { ToolType } from '@/types/canvas'
-import { useShallow } from 'zustand/react/shallow'
+import type { CanvasEventType, ToolType } from '@/types/canvas'
+import {
+  addArrow,
+  addStickyNote,
+  addText,
+  disableFreeDraw,
+  duplicateSelected,
+  enableFreeDraw,
+} from '@/lib/fabric/tools'
+import { initializeCanvas, setupCanvasPan, setupCanvasResize } from '@/lib/fabric/init'
+
+const MIN_ZOOM = 0.05
+const MAX_ZOOM = 5
+const ZOOM_FACTOR = 0.95
+
+async function broadcastCanvasEvent(
+  boardId: string,
+  eventType: CanvasEventType,
+  payload: Record<string, unknown>
+): Promise<void> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const { error } = await (supabase.from('canvas_events') as any).insert({
+    board_id: boardId,
+    user_id: user.id,
+    event_type: eventType,
+    payload,
+  })
+
+  if (error) console.error('[broadcastCanvasEvent]', error.message)
+}
 
 interface UseCanvasOptions {
   boardId: string
@@ -26,12 +58,22 @@ export function useCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<fabric.Canvas | null>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const drawingRef = useRef<fabric.Object | null>(null)
-  const isPanningRef = useRef(false)
-  const lastPanRef = useRef({ x: 0, y: 0 })
-  const startPointRef = useRef({ x: 0, y: 0 })
+  const cleanupRef = useRef<Array<() => void>>([])
+  const drawingStateRef = useRef<{ startX: number; startY: number; tool: ToolType } | null>(null)
+  const imageInputRef = useRef<HTMLInputElement | null>(null)
+  const suppressHistoryRef = useRef(false)
 
-  const { activeTool, strokeColor, fillColor, strokeWidth, opacity, fontSize, fontFamily, showGrid, snapToGrid, gridSize } = useCanvasStore(
+  const {
+    activeTool,
+    strokeColor,
+    fillColor,
+    strokeWidth,
+    opacity,
+    fontSize,
+    fontFamily,
+    snapToGrid,
+    gridSize,
+  } = useCanvasStore(
     useShallow((state) => ({
       activeTool: state.activeTool,
       strokeColor: state.strokeColor,
@@ -40,40 +82,32 @@ export function useCanvas({
       opacity: state.opacity,
       fontSize: state.fontSize,
       fontFamily: state.fontFamily,
-      showGrid: state.showGrid,
       snapToGrid: state.snapToGrid,
       gridSize: state.gridSize,
     }))
   )
 
-  // Initialize canvas
   useEffect(() => {
     if (!canvasRef.current) return
 
     const parent = canvasRef.current.parentElement
-    const canvas = new fabric.Canvas(canvasRef.current, {
-      isDrawingMode: false,
-      selection: canEdit,
-      backgroundColor: '#ffffff',
-      width: parent?.clientWidth ?? window.innerWidth,
-      height: parent?.clientHeight ?? window.innerHeight - 112,
-    })
+    const canvas = initializeCanvas(
+      canvasRef.current,
+      parent?.clientWidth ?? window.innerWidth,
+      parent?.clientHeight ?? window.innerHeight - 112
+    )
 
-    canvas.getElement().style.touchAction = 'none'
+    canvas.defaultCursor = 'default'
     const anyCanvas = canvas as any
-    anyCanvas.upperCanvasEl?.style.setProperty('touch-action', 'none')
-    anyCanvas.wrapperEl?.style.setProperty('touch-action', 'none')
-
+    if (anyCanvas.upperCanvasEl?.style) anyCanvas.upperCanvasEl.style.touchAction = 'none'
+    if (anyCanvas.wrapperEl?.style) anyCanvas.wrapperEl.style.touchAction = 'none'
+    canvas.selection = canEdit && activeTool === 'select'
     fabricRef.current = canvas
     ;(window as any).__fabric__ = canvas
 
-    const handleResize = () => {
-      const p = canvasRef.current?.parentElement
-      canvas.setWidth(p?.clientWidth ?? window.innerWidth)
-      canvas.setHeight(p?.clientHeight ?? window.innerHeight - 112)
-      canvas.renderAll()
-    }
-    window.addEventListener('resize', handleResize)
+    const resizeCleanup = setupCanvasResize(canvas, parent ?? canvas.getElement().parentElement ?? anyCanvas.wrapperEl)
+    const panCleanup = setupCanvasPan(canvas)
+    cleanupRef.current.push(resizeCleanup, panCleanup)
 
     const { setSaving, setSaved, setError } = useSaveStore.getState()
     const debouncedSave = () => {
@@ -90,123 +124,122 @@ export function useCanvas({
           })
           if (!response.ok) throw new Error('Unable to save board')
           setSaved()
-        } catch (err: any) {
-          setError(err?.message ?? 'save failed')
+        } catch (error: any) {
+          setError(error?.message ?? 'save failed')
         }
       }, 800)
     }
 
-    const retrySave = () => debouncedSave()
-    window.addEventListener('whiteboard:retry-save', retrySave)
+    const dispatchZoomChange = () => window.dispatchEvent(new Event('whiteboard:zoom-changed'))
 
-    canvas.on('object:added', (e) => {
-      if (!e.target || (e.target as any)._ignoreEvent) return
-      onObjectAdded?.(e.target)
-      broadcastCanvasEvent(boardId, 'object:added', e.target.toObject())
-      debouncedSave()
-    })
-    canvas.on('object:modified', (e) => {
-      if (!e.target) return
-      onObjectModified?.(e.target)
-      broadcastCanvasEvent(boardId, 'object:modified', e.target.toObject())
-      debouncedSave()
-    })
-    canvas.on('object:removed', (e) => {
-      if (!e.target) return
-      onObjectRemoved?.(e.target)
-      broadcastCanvasEvent(boardId, 'object:removed', { id: (e.target as any).id })
-      debouncedSave()
-    })
-    canvas.on('path:created', () => debouncedSave())
-
-    // Zoom with mouse wheel
-    canvas.on('mouse:wheel', (opt) => {
-      const event = opt.e as WheelEvent
-      let zoom = canvas.getZoom()
-      zoom *= 0.999 ** event.deltaY
-      zoom = Math.min(5, Math.max(0.1, zoom))
-      canvas.zoomToPoint(new fabric.Point(event.offsetX, event.offsetY), zoom)
+    const onMouseWheel = (opt: fabric.IEvent<WheelEvent>) => {
+      const event = opt.e
       event.preventDefault()
       event.stopPropagation()
-      window.dispatchEvent(new Event('whiteboard:zoom-changed'))
-    })
 
-    // Touch pinch zoom
-    let lastDist = 0
-    canvas.on('touch:gesture' as any, (e: any) => {
-      if (e.e.touches?.length === 2) {
-        const t1 = e.e.touches[0]
-        const t2 = e.e.touches[1]
-        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY)
-        if (lastDist > 0) {
-          let zoom = canvas.getZoom() * (dist / lastDist)
-          zoom = Math.min(5, Math.max(0.1, zoom))
-          const midX = (t1.clientX + t2.clientX) / 2
-          const midY = (t1.clientY + t2.clientY) / 2
-          canvas.zoomToPoint(new fabric.Point(midX, midY), zoom)
-        }
-        lastDist = dist
-      }
-    })
+      const zoom = clampZoom(canvas.getZoom() * (event.deltaY > 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR))
+      canvas.zoomToPoint(new fabric.Point(event.offsetX, event.offsetY), zoom)
+      canvas.requestRenderAll()
+      dispatchZoomChange()
+    }
 
-    // Keyboard shortcuts
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!canEdit) return
-      if ((e.key === 'Delete' || e.key === 'Backspace') && !isInputEl(e.target)) {
-        const objs = canvas.getActiveObjects()
-        canvas.discardActiveObject()
-        objs.forEach((o) => canvas.remove(o))
-        canvas.renderAll()
+    const handleObjectAdded = (event: any) => {
+      const target = event.target
+      if (!target || (target as any)._ignoreEvent || suppressHistoryRef.current) return
+      onObjectAdded?.(target)
+      void broadcastCanvasEvent(boardId, 'object:added', target.toObject())
+      debouncedSave()
+    }
+
+    const handleObjectModified = (event: any) => {
+      const target = event.target
+      if (!target || suppressHistoryRef.current) return
+      onObjectModified?.(target)
+      void broadcastCanvasEvent(boardId, 'object:modified', target.toObject())
+      debouncedSave()
+    }
+
+    const handleObjectRemoved = (event: any) => {
+      const target = event.target
+      if (!target || suppressHistoryRef.current) return
+      onObjectRemoved?.(target)
+      void broadcastCanvasEvent(boardId, 'object:removed', { id: (target as any).id })
+      debouncedSave()
+    }
+
+    const onPathCreated = () => debouncedSave()
+
+    canvas.on('mouse:wheel', onMouseWheel)
+    canvas.on('object:added', handleObjectAdded)
+    canvas.on('object:modified', handleObjectModified)
+    canvas.on('object:removed', handleObjectRemoved)
+    canvas.on('path:created', onPathCreated)
+
+    const handleRetrySave = () => debouncedSave()
+    window.addEventListener('whiteboard:retry-save', handleRetrySave)
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!canEdit || isInputElement(event.target)) return
+
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault()
+        deleteSelectedInternal(canvas)
         debouncedSave()
+        return
       }
-      if (e.ctrlKey && e.key === 'a') {
-        e.preventDefault()
+
+      if (event.ctrlKey && event.key.toLowerCase() === 'a') {
+        event.preventDefault()
+        const objects = canvas.getObjects().filter((obj) => obj.evented !== false && obj.visible !== false)
+        if (objects.length > 0) {
+          const selection = new fabric.ActiveSelection(objects, { canvas })
+          canvas.setActiveObject(selection)
+          canvas.requestRenderAll()
+        }
+        return
+      }
+
+      if (event.ctrlKey && event.key.toLowerCase() === 'd') {
+        event.preventDefault()
+        duplicateSelected(canvas)
+        debouncedSave()
+        return
+      }
+
+      if (event.key === 'Escape') {
         canvas.discardActiveObject()
-        const sel = new fabric.ActiveSelection(canvas.getObjects(), { canvas })
-        canvas.setActiveObject(sel)
         canvas.requestRenderAll()
       }
-      if (e.ctrlKey && e.key === 'd') {
-        e.preventDefault()
-        const active = canvas.getActiveObject()
-        if (!active) return
-        active.clone((cloned: fabric.Object) => {
-          cloned.set({ left: (active.left ?? 0) + 20, top: (active.top ?? 0) + 20 })
-          ;(cloned as any).id = crypto.randomUUID()
-          canvas.add(cloned)
-          canvas.setActiveObject(cloned)
-          canvas.requestRenderAll()
-          debouncedSave()
-        })
-      }
     }
+
     window.addEventListener('keydown', handleKeyDown)
+
+    cleanupRef.current.push(() => canvas.off('mouse:wheel', onMouseWheel))
+    cleanupRef.current.push(() => canvas.off('object:added', handleObjectAdded))
+    cleanupRef.current.push(() => canvas.off('object:modified', handleObjectModified))
+    cleanupRef.current.push(() => canvas.off('object:removed', handleObjectRemoved))
+    cleanupRef.current.push(() => canvas.off('path:created', onPathCreated))
+    cleanupRef.current.push(() => window.removeEventListener('whiteboard:retry-save', handleRetrySave))
+    cleanupRef.current.push(() => window.removeEventListener('keydown', handleKeyDown))
 
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-      window.removeEventListener('resize', handleResize)
-      window.removeEventListener('whiteboard:retry-save', retrySave)
-      window.removeEventListener('keydown', handleKeyDown)
+      cleanupRef.current.forEach((cleanup) => cleanup())
+      cleanupRef.current = []
       canvas.dispose()
       fabricRef.current = null
+      if ((window as any).__fabric__ === canvas) {
+        delete (window as any).__fabric__
+      }
     }
   }, [boardId, canEdit])
 
-  // Sync tool to canvas
   useEffect(() => {
     const canvas = fabricRef.current
     if (!canvas) return
     applyTool(canvas, activeTool, { strokeColor, fillColor, strokeWidth, canEdit })
   }, [activeTool, strokeColor, fillColor, strokeWidth, canEdit])
 
-  // Grid overlay
-  useEffect(() => {
-    const canvas = fabricRef.current
-    if (!canvas) return
-    drawGrid(canvas, showGrid, gridSize)
-  }, [showGrid, gridSize])
-
-  // Shape & pan handlers
   useEffect(() => {
     const canvas = fabricRef.current
     if (!canvas) return
@@ -215,21 +248,18 @@ export function useCanvas({
       if (!canEdit) return
       const pointer = canvas.getPointer(opt.e)
       let { x, y } = pointer
-      if (snapToGrid) { x = snap(x, gridSize); y = snap(y, gridSize) }
-      startPointRef.current = { x, y }
+      if (snapToGrid) {
+        x = snap(x, gridSize)
+        y = snap(y, gridSize)
+      }
 
       if (activeTool === 'text') {
-        const text = new fabric.IText('Click to edit', {
-          left: x, top: y,
-          fontSize,
-          fontFamily,
-          fill: strokeColor,
-          selectable: true,
-          id: crypto.randomUUID(),
-        } as any)
-        canvas.add(text)
-        canvas.setActiveObject(text)
-        text.enterEditing()
+        addText(canvas, x, y, 'Click to edit', strokeColor, fontSize, fontFamily)
+        return
+      }
+
+      if (activeTool === 'sticky') {
+        addStickyNote(canvas, x, y, fillColor === 'transparent' ? '#fef08a' : fillColor)
         return
       }
 
@@ -238,20 +268,9 @@ export function useCanvas({
         return
       }
 
-      if (activeTool === 'pan') {
-        isPanningRef.current = true
-        const pt = getClientPoint(opt.e)
-        lastPanRef.current = { x: pt.x, y: pt.y }
-        canvas.defaultCursor = 'grabbing'
-        return
-      }
-
       if (activeTool === 'image') {
-        const input = document.createElement('input')
-        input.type = 'file'
-        input.accept = 'image/*'
-        input.onchange = (ev) => {
-          const file = (ev.target as HTMLInputElement).files?.[0]
+        ensureImageInput(imageInputRef, () => {
+          const file = imageInputRef.current?.files?.[0]
           if (!file) return
           const url = URL.createObjectURL(file)
           fabric.Image.fromURL(url, (img) => {
@@ -260,151 +279,155 @@ export function useCanvas({
             canvas.setActiveObject(img)
             canvas.requestRenderAll()
           })
-        }
-        input.click()
+        })
+        imageInputRef.current?.click()
         return
       }
 
-      // Shape tools
-      const shapeOpts = {
-        fill: fillColor,
-        stroke: strokeColor,
-        strokeWidth,
-        opacity,
-        selectable: false,
-        id: crypto.randomUUID(),
+      if (activeTool === 'pen') {
+        enableFreeDraw(canvas, strokeColor, strokeWidth)
+        return
       }
 
-      if (activeTool === 'rectangle') {
-        drawingRef.current = new fabric.Rect({ ...shapeOpts, left: x, top: y, width: 0, height: 0 } as any)
-      } else if (activeTool === 'circle') {
-        drawingRef.current = new fabric.Ellipse({ ...shapeOpts, left: x, top: y, rx: 0, ry: 0, originX: 'left', originY: 'top' } as any)
-      } else if (activeTool === 'line') {
-        drawingRef.current = new fabric.Line([x, y, x, y], { ...shapeOpts, fill: '' } as any)
-      } else if (activeTool === 'arrow') {
-        drawingRef.current = new fabric.Line([x, y, x, y], { ...shapeOpts, fill: '' } as any)
-      } else if (activeTool === 'triangle') {
-        drawingRef.current = new fabric.Triangle({ ...shapeOpts, left: x, top: y, width: 0, height: 0 } as any)
-      } else if (activeTool === 'diamond') {
-        const pts = [{ x: 0, y: -50 }, { x: 50, y: 0 }, { x: 0, y: 50 }, { x: -50, y: 0 }]
-        drawingRef.current = new fabric.Polygon(pts, { ...shapeOpts, left: x, top: y } as any)
+      if (activeTool === 'pan') {
+        canvas.defaultCursor = 'grab'
+        return
       }
 
-      if (drawingRef.current) canvas.add(drawingRef.current)
+      if (activeTool === 'rectangle' || activeTool === 'circle' || activeTool === 'triangle' || activeTool === 'diamond' || activeTool === 'line' || activeTool === 'arrow') {
+        drawingStateRef.current = { startX: x, startY: y, tool: activeTool }
+        const shape = createShapePreview(canvas, activeTool, x, y, strokeColor, fillColor, strokeWidth, opacity)
+        if (shape) {
+          canvas.add(shape)
+        }
+      }
     }
 
     const onMouseMove = (opt: fabric.IEvent) => {
+      if (!canEdit) return
       const pointer = canvas.getPointer(opt.e)
       let { x, y } = pointer
-      if (snapToGrid) { x = snap(x, gridSize); y = snap(y, gridSize) }
-      const { x: sx, y: sy } = startPointRef.current
+      if (snapToGrid) {
+        x = snap(x, gridSize)
+        y = snap(y, gridSize)
+      }
 
-      if (activeTool === 'eraser' && isPrimaryDown(opt.e)) {
-        eraseAt(canvas, pointer)
+      const state = drawingStateRef.current
+      if (!state) {
+        if (activeTool === 'eraser' && isPrimaryDown(opt.e)) {
+          eraseAt(canvas, pointer)
+        }
         return
       }
 
-      if (isPanningRef.current) {
-        const pt = getClientPoint(opt.e)
-        const vpt = canvas.viewportTransform
-        if (!vpt) return
-        vpt[4] += pt.x - lastPanRef.current.x
-        vpt[5] += pt.y - lastPanRef.current.y
-        canvas.requestRenderAll()
-        lastPanRef.current = { x: pt.x, y: pt.y }
-        return
-      }
+      const objects = canvas.getObjects()
+      const activeObject = objects[objects.length - 1]
+      if (!activeObject || activeObject.selectable !== false) return
 
-      const d = drawingRef.current
-      if (!d) return
-
-      if (d instanceof fabric.Rect || d instanceof fabric.Triangle) {
-        d.set({ left: Math.min(sx, x), top: Math.min(sy, y), width: Math.abs(x - sx), height: Math.abs(y - sy) })
-      } else if (d instanceof fabric.Ellipse) {
-        d.set({ left: Math.min(sx, x), top: Math.min(sy, y), rx: Math.abs(x - sx) / 2, ry: Math.abs(y - sy) / 2 })
-      } else if (d instanceof fabric.Line) {
-        d.set({ x2: x, y2: y })
-      } else if (d instanceof fabric.Polygon) {
-        const w = Math.abs(x - sx)
-        const h = Math.abs(y - sy)
-        const pts = [
-          { x: w / 2, y: 0 },
-          { x: w, y: h / 2 },
-          { x: w / 2, y: h },
-          { x: 0, y: h / 2 },
-        ]
-        d.set({ points: pts, left: Math.min(sx, x), top: Math.min(sy, y), pathOffset: { x: w / 2, y: h / 2 } } as any)
-      }
-
-      d.setCoords()
+      updateShapePreview(activeObject, state.tool, state.startX, state.startY, x, y)
+      activeObject.setCoords()
       canvas.requestRenderAll()
     }
 
-    const onMouseUp = () => {
-      if (isPanningRef.current) {
-        isPanningRef.current = false
-        canvas.defaultCursor = 'grab'
+    const onMouseUp = (opt: fabric.IEvent) => {
+      if (!canEdit) return
+
+      const state = drawingStateRef.current
+      if (activeTool === 'pen') {
+        disableFreeDraw(canvas)
       }
-      const d = drawingRef.current
-      if (d) {
-        d.set({ selectable: true })
-        canvas.setActiveObject(d)
-        canvas.fire('object:modified', { target: d })
-        drawingRef.current = null
+
+      if (!state) return
+
+      const pointer = canvas.getPointer(opt.e)
+      let { x, y } = pointer
+      if (snapToGrid) {
+        x = snap(x, gridSize)
+        y = snap(y, gridSize)
       }
+
+      if (state.tool === 'arrow') {
+        const objects = canvas.getObjects()
+        const preview = objects[objects.length - 1]
+        if (preview && preview.selectable === false) {
+          canvas.remove(preview)
+        }
+        const arrow = addArrow(canvas, state.startX, state.startY, x, y, strokeColor, strokeWidth)
+        canvas.setActiveObject(arrow)
+        canvas.requestRenderAll()
+      }
+
+      const lastObject = canvas.getObjects().at(-1)
+      if (lastObject && lastObject.selectable === false) {
+        lastObject.set({ selectable: true, evented: true })
+        canvas.setActiveObject(lastObject)
+        canvas.requestRenderAll()
+      }
+
+      drawingStateRef.current = null
+      canvas.requestRenderAll()
     }
 
-    const tools: ToolType[] = ['rectangle', 'circle', 'line', 'arrow', 'triangle', 'diamond', 'text', 'eraser', 'pan', 'image']
-    if (tools.includes(activeTool)) {
-      canvas.on('mouse:down', onMouseDown)
-      canvas.on('mouse:move', onMouseMove)
-      canvas.on('mouse:up', onMouseUp)
-    }
+    canvas.on('mouse:down', onMouseDown)
+    canvas.on('mouse:move', onMouseMove)
+    canvas.on('mouse:up', onMouseUp)
 
     return () => {
       canvas.off('mouse:down', onMouseDown)
       canvas.off('mouse:move', onMouseMove)
       canvas.off('mouse:up', onMouseUp)
     }
-  }, [activeTool, fillColor, strokeColor, strokeWidth, opacity, fontSize, fontFamily, canEdit, snapToGrid, gridSize])
+  }, [activeTool, boardId, canEdit, fillColor, fontFamily, fontSize, gridSize, opacity, snapToGrid, strokeColor, strokeWidth])
 
   const loadFromJSON = useCallback((json: object) => {
     const canvas = fabricRef.current
     if (!canvas) return
-    canvas.loadFromJSON(json, () => canvas.renderAll())
+    suppressHistoryRef.current = true
+    canvas.loadFromJSON(json, () => {
+      canvas.requestRenderAll()
+      suppressHistoryRef.current = false
+    })
   }, [])
 
-  const toJSON = useCallback(() => fabricRef.current?.toJSON() ?? {}, [])
+  const toJSON = useCallback(() => fabricRef.current?.toJSON(['id']) ?? {}, [])
 
   const clear = useCallback(() => {
-    fabricRef.current?.clear()
-    broadcastCanvasEvent(boardId, 'canvas:cleared', {})
+    const canvas = fabricRef.current
+    if (!canvas) return
+    suppressHistoryRef.current = true
+    canvas.clear()
+    canvas.backgroundColor = '#ffffff'
+    canvas.requestRenderAll()
+    suppressHistoryRef.current = false
+    void broadcastCanvasEvent(boardId, 'canvas:cleared', {})
   }, [boardId])
 
   const deleteSelected = useCallback(() => {
     const canvas = fabricRef.current
     if (!canvas) return
-    const objs = canvas.getActiveObjects()
-    canvas.discardActiveObject()
-    objs.forEach((o) => canvas.remove(o))
-    canvas.renderAll()
+    deleteSelectedInternal(canvas)
+  }, [])
+
+  const zoomTo = useCallback((zoom: number) => {
+    const canvas = fabricRef.current
+    if (!canvas) return
+    const nextZoom = clampZoom(zoom)
+    canvas.zoomToPoint(new fabric.Point(canvas.getWidth() / 2, canvas.getHeight() / 2), nextZoom)
+    canvas.requestRenderAll()
+    window.dispatchEvent(new Event('whiteboard:zoom-changed'))
   }, [])
 
   const zoomIn = useCallback(() => {
     const canvas = fabricRef.current
     if (!canvas) return
-    const zoom = Math.min(5, canvas.getZoom() * 1.1)
-    canvas.setZoom(zoom)
-    canvas.requestRenderAll()
-  }, [])
+    zoomTo(canvas.getZoom() / ZOOM_FACTOR)
+  }, [zoomTo])
 
   const zoomOut = useCallback(() => {
     const canvas = fabricRef.current
     if (!canvas) return
-    const zoom = Math.max(0.1, canvas.getZoom() / 1.1)
-    canvas.setZoom(zoom)
-    canvas.requestRenderAll()
-  }, [])
+    zoomTo(canvas.getZoom() * ZOOM_FACTOR)
+  }, [zoomTo])
 
   const zoomFit = useCallback(() => {
     const canvas = fabricRef.current
@@ -412,82 +435,248 @@ export function useCanvas({
     canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
     canvas.setZoom(1)
     canvas.requestRenderAll()
+    window.dispatchEvent(new Event('whiteboard:zoom-changed'))
   }, [])
 
   const alignObjects = useCallback((direction: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     const canvas = fabricRef.current
     if (!canvas) return
-    const objs = canvas.getActiveObjects()
-    if (objs.length < 2) return
+    const objects = canvas.getActiveObjects()
+    if (objects.length < 2) return
     const bounds = canvas.getActiveObject()?.getBoundingRect()
     if (!bounds) return
-    objs.forEach((obj) => {
-      if (direction === 'left') obj.set({ left: bounds.left })
-      if (direction === 'right') obj.set({ left: bounds.left + bounds.width - (obj.width ?? 0) * (obj.scaleX ?? 1) })
-      if (direction === 'center') obj.set({ left: bounds.left + bounds.width / 2 - (obj.width ?? 0) * (obj.scaleX ?? 1) / 2 })
-      if (direction === 'top') obj.set({ top: bounds.top })
-      if (direction === 'bottom') obj.set({ top: bounds.top + bounds.height - (obj.height ?? 0) * (obj.scaleY ?? 1) })
-      if (direction === 'middle') obj.set({ top: bounds.top + bounds.height / 2 - (obj.height ?? 0) * (obj.scaleY ?? 1) / 2 })
-      obj.setCoords()
+
+    objects.forEach((object) => {
+      if (direction === 'left') object.set({ left: bounds.left })
+      if (direction === 'center') object.set({ left: bounds.left + bounds.width / 2 - object.getScaledWidth() / 2 })
+      if (direction === 'right') object.set({ left: bounds.left + bounds.width - object.getScaledWidth() })
+      if (direction === 'top') object.set({ top: bounds.top })
+      if (direction === 'middle') object.set({ top: bounds.top + bounds.height / 2 - object.getScaledHeight() / 2 })
+      if (direction === 'bottom') object.set({ top: bounds.top + bounds.height - object.getScaledHeight() })
+      object.setCoords()
     })
+
     canvas.requestRenderAll()
   }, [])
 
   return { canvasRef, fabricRef, loadFromJSON, toJSON, clear, deleteSelected, zoomIn, zoomOut, zoomFit, alignObjects }
 }
 
-function applyTool(canvas: fabric.Canvas, tool: ToolType, opts: { strokeColor: string; fillColor: string; strokeWidth: number; canEdit: boolean }) {
+function applyTool(
+  canvas: fabric.Canvas,
+  tool: ToolType,
+  opts: { strokeColor: string; fillColor: string; strokeWidth: number; canEdit: boolean }
+) {
   canvas.isDrawingMode = false
-  canvas.selection = opts.canEdit && tool === 'select'
+
+  if (!opts.canEdit) {
+    canvas.selection = false
+    canvas.defaultCursor = 'not-allowed'
+    disableFreeDraw(canvas)
+    return
+  }
+
+  canvas.selection = tool === 'select'
 
   switch (tool) {
     case 'pen':
-      canvas.isDrawingMode = true
-      canvas.freeDrawingBrush.color = opts.strokeColor
-      canvas.freeDrawingBrush.width = opts.strokeWidth
+      enableFreeDraw(canvas, opts.strokeColor, opts.strokeWidth)
+      canvas.defaultCursor = 'crosshair'
       break
-    case 'select': canvas.defaultCursor = 'default'; break
-    case 'text': canvas.defaultCursor = 'text'; break
-    case 'eraser': canvas.defaultCursor = 'cell'; canvas.selection = false; break
-    case 'pan': canvas.defaultCursor = 'grab'; canvas.selection = false; break
-    default: canvas.defaultCursor = 'crosshair'; canvas.selection = false
+    case 'select':
+      disableFreeDraw(canvas)
+      canvas.defaultCursor = 'default'
+      break
+    case 'text':
+      disableFreeDraw(canvas)
+      canvas.defaultCursor = 'text'
+      break
+    case 'eraser':
+      disableFreeDraw(canvas)
+      canvas.defaultCursor = 'cell'
+      canvas.selection = false
+      break
+    case 'pan':
+      disableFreeDraw(canvas)
+      canvas.defaultCursor = 'grab'
+      canvas.selection = false
+      break
+    default:
+      disableFreeDraw(canvas)
+      canvas.defaultCursor = 'crosshair'
+      canvas.selection = false
   }
 }
 
-function eraseAt(canvas: fabric.Canvas, pointer: { x: number; y: number }) {
-  const pt = new fabric.Point(pointer.x, pointer.y)
-  const target = [...canvas.getObjects()].reverse().find((o) => o.containsPoint(pt))
-  if (target) { canvas.remove(target); canvas.requestRenderAll() }
+function createShapePreview(
+  canvas: fabric.Canvas,
+  tool: ToolType,
+  x: number,
+  y: number,
+  strokeColor: string,
+  fillColor: string,
+  strokeWidth: number,
+  opacity: number
+): fabric.Object | null {
+  const options = {
+    stroke: strokeColor,
+    fill: fillColor,
+    strokeWidth,
+    opacity,
+    selectable: false,
+    evented: false,
+    originX: 'left' as const,
+    originY: 'top' as const,
+    id: crypto.randomUUID(),
+  }
+
+  if (tool === 'rectangle') {
+    return new fabric.Rect({ ...options, left: x, top: y, width: 0, height: 0 })
+  }
+
+  if (tool === 'circle') {
+    return new fabric.Ellipse({ ...options, left: x, top: y, rx: 0, ry: 0 } as any)
+  }
+
+  if (tool === 'triangle') {
+    return new fabric.Triangle({ ...options, left: x, top: y, width: 0, height: 0 })
+  }
+
+  if (tool === 'diamond') {
+    return new fabric.Polygon(
+      [
+        { x: 0, y: 30 },
+        { x: 30, y: 0 },
+        { x: 60, y: 30 },
+        { x: 30, y: 60 },
+      ],
+      { ...options, left: x, top: y } as any
+    )
+  }
+
+  if (tool === 'line') {
+    return new fabric.Line([x, y, x, y], { ...options, fill: '', strokeUniform: true })
+  }
+
+  if (tool === 'arrow') {
+    return new fabric.Line([x, y, x, y], { ...options, fill: '', strokeUniform: true })
+  }
+
+  return null
 }
 
-function drawGrid(canvas: fabric.Canvas, show: boolean, size: number) {
-  canvas.getObjects().filter((o) => (o as any)._isGrid).forEach((o) => canvas.remove(o))
-  if (!show) { canvas.requestRenderAll(); return }
-  const w = canvas.getWidth()
-  const h = canvas.getHeight()
-  for (let x = 0; x < w; x += size) {
-    const line = new fabric.Line([x, 0, x, h], { stroke: '#e5e7eb', strokeWidth: 1, selectable: false, evented: false, _isGrid: true } as any)
-    canvas.add(line)
-    canvas.sendToBack(line)
+function updateShapePreview(
+  object: fabric.Object,
+  tool: ToolType,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number
+): void {
+  if (tool === 'rectangle') {
+    object.set({
+      left: Math.min(startX, endX),
+      top: Math.min(startY, endY),
+      width: Math.abs(endX - startX),
+      height: Math.abs(endY - startY),
+    })
+    return
   }
-  for (let y = 0; y < h; y += size) {
-    const line = new fabric.Line([0, y, w, y], { stroke: '#e5e7eb', strokeWidth: 1, selectable: false, evented: false, _isGrid: true } as any)
-    canvas.add(line)
-    canvas.sendToBack(line)
+
+  if (tool === 'circle') {
+    object.set({
+      left: Math.min(startX, endX),
+      top: Math.min(startY, endY),
+      rx: Math.abs(endX - startX) / 2,
+      ry: Math.abs(endY - startY) / 2,
+    } as any)
+    return
   }
+
+  if (tool === 'triangle') {
+    object.set({
+      left: Math.min(startX, endX),
+      top: Math.min(startY, endY),
+      width: Math.abs(endX - startX),
+      height: Math.abs(endY - startY),
+    })
+    return
+  }
+
+  if (tool === 'diamond') {
+    const width = Math.max(1, Math.abs(endX - startX))
+    const height = Math.max(1, Math.abs(endY - startY))
+    ;(object as fabric.Polygon).set({
+      left: Math.min(startX, endX),
+      top: Math.min(startY, endY),
+      width,
+      height,
+      pathOffset: new fabric.Point(width / 2, height / 2),
+      points: [
+        { x: width / 2, y: 0 },
+        { x: width, y: height / 2 },
+        { x: width / 2, y: height },
+        { x: 0, y: height / 2 },
+      ],
+    } as any)
+    return
+  }
+
+  if (tool === 'line') {
+    ;(object as fabric.Line).set({ x2: endX, y2: endY })
+  }
+}
+
+function deleteSelectedInternal(canvas: fabric.Canvas): void {
+  const activeObjects = canvas.getActiveObjects()
+  if (activeObjects.length === 0) return
+  canvas.discardActiveObject()
+  activeObjects.forEach((object) => canvas.remove(object))
   canvas.requestRenderAll()
 }
 
-function snap(val: number, size: number) { return Math.round(val / size) * size }
-function getClientPoint(e: Event) {
-  if (e instanceof TouchEvent && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY }
-  if (e instanceof TouchEvent && e.changedTouches.length > 0) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY }
-  return { x: (e as MouseEvent).clientX, y: (e as MouseEvent).clientY }
+function eraseAt(canvas: fabric.Canvas, pointer: { x: number; y: number }): void {
+  const point = new fabric.Point(pointer.x, pointer.y)
+  const target = [...canvas.getObjects()].reverse().find((object) => object.containsPoint(point))
+  if (target) {
+    canvas.remove(target)
+    canvas.requestRenderAll()
+  }
 }
-function isPrimaryDown(e: Event) {
-  if (e instanceof TouchEvent) return e.touches.length > 0
-  return (e as MouseEvent).buttons === 1
+
+function snap(value: number, size: number): number {
+  return Math.round(value / size) * size
 }
-function isInputEl(t: EventTarget | null) {
-  return t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || (t instanceof HTMLElement && t.contentEditable === 'true')
+
+function clampZoom(zoom: number): number {
+  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom))
+}
+
+function isPrimaryDown(event: Event): boolean {
+  if (event instanceof MouseEvent) return (event.buttons & 1) === 1
+  if (event instanceof TouchEvent) return event.touches.length > 0
+  return false
+}
+
+function ensureImageInput(ref: { current: HTMLInputElement | null }, onChange: () => void): void {
+  if (ref.current) {
+    ref.current.onchange = onChange
+    return
+  }
+
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
+  input.style.display = 'none'
+  input.addEventListener('change', onChange)
+  document.body.appendChild(input)
+  ref.current = input
+}
+
+function isInputElement(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    (target instanceof HTMLElement && target.contentEditable === 'true')
+  )
 }

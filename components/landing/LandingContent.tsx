@@ -52,10 +52,10 @@ export default function LandingContent() {
       <main className="page relative mx-auto flex min-h-screen max-w-[1120px] flex-col px-4 pb-10 pt-28 text-center sm:px-6 sm:pt-32 sm:pb-12">
         <div className="hero mx-auto w-full">
           <div className="hero__badge mx-auto mb-5 inline-flex max-w-full items-center justify-center gap-2 rounded-full bg-[#0abfbc]/12 px-4 py-2.5 text-center text-[11px] font-bold uppercase tracking-[0.14em] text-[#0d0d0d] backdrop-blur-sm sm:mb-6 sm:gap-3 sm:px-5 sm:py-3 sm:text-xs sm:tracking-[0.18em]">
-            ✨ The New Way to Ideate
+             The New Way to Ideate 
           </div>
 
-          <h1 className="hero__title mx-auto max-w-[760px] text-[clamp(3.1rem,16vw,7.25rem)] font-semibold leading-[0.94] text-[#0d0d0d] sm:leading-[0.92]" style={{ fontFamily: 'Instrument Serif, serif' }}>
+          <h1 className="hero__title mx-auto max-w-[760px] text-[clamp(2.8rem,13vw,6.25rem)] font-semibold leading-[0.94] text-[#0d0d0d] sm:leading-[0.92]" style={{ fontFamily: 'Instrument Serif, serif' }}>
             Collaborate.
             <strong className="block italic text-[#0abfbc]">Create. Innovate.</strong>
           </h1>
@@ -119,6 +119,51 @@ export default function LandingContent() {
               <div className="arrow absolute h-20 w-[2px] bg-[#0d0d0d]/20" style={{ left: '14%', top: '24%', transform: 'rotate(28deg)' }} />
               <div className="arrow absolute h-[72px] w-[2px] bg-[#0d0d0d]/20" style={{ left: '45%', top: '46%', transform: 'rotate(-12deg)' }} />
               <div className="arrow absolute h-[58px] w-[2px] bg-[#0d0d0d]/20" style={{ left: '74%', top: '70%', transform: 'rotate(18deg)' }} />
+            </div>
+          </section>
+
+          {/* WHY SECTION */}
+          <section id="why" style={{
+            width: 'min(1120px, 100%)',
+            margin: '80px auto 0',
+            padding: '80px 24px',
+            textAlign: 'center',
+          }}>
+            <p style={{fontSize:'0.82rem', letterSpacing:'0.18em', textTransform:'uppercase', color:'#0abfbc', marginBottom:'16px'}}>Why IdeaSpace</p>
+            <h2 style={{fontFamily:'Instrument Serif,Georgia,serif', fontSize:'clamp(2.4rem,5vw,4rem)', fontWeight:600, letterSpacing:'-0.04em', margin:'0 auto 16px', maxWidth:'640px', lineHeight:1.05}}>
+              Why teams choose IdeaSpace
+            </h2>
+            <p style={{color:'rgba(13,13,13,0.65)', fontSize:'1.05rem', maxWidth:'480px', margin:'0 auto 56px', lineHeight:1.85}}>
+              One canvas. Zero friction. Infinite ideas.
+            </p>
+
+            <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))', gap:'24px', textAlign:'left'}}>
+
+              <div style={{background:'#fff', borderRadius:'24px', padding:'28px', border:'1px solid rgba(13,13,13,0.06)', boxShadow:'0 8px 32px rgba(13,13,13,0.05)'}}>
+                <div style={{fontSize:'1.8rem', marginBottom:'16px'}}>
+                </div>
+                <strong style={{fontSize:'1rem', display:'block', marginBottom:'10px'}}>Real-Time Collaboration</strong>
+                <p style={{margin:0, color:'rgba(13,13,13,0.65)', fontSize:'0.95rem', lineHeight:1.75}}>See your team's cursors live. No refresh, no delays — just instant shared thinking on one canvas.</p>
+              </div>
+
+              <div style={{background:'#fff', borderRadius:'24px', padding:'28px', border:'1px solid rgba(13,13,13,0.06)', boxShadow:'0 8px 32px rgba(13,13,13,0.05)'}}>
+                <div style={{fontSize:'1.8rem', marginBottom:'16px'}}></div>
+                <strong style={{fontSize:'1rem', display:'block', marginBottom:'10px'}}>Visual Workflows Built Fast</strong>
+                <p style={{margin:0, color:'rgba(13,13,13,0.65)', fontSize:'0.95rem', lineHeight:1.75}}>Drag, connect, and organize ideas into clear flows without any manual setup or complex tools.</p>
+              </div>
+
+              <div style={{background:'#fff', borderRadius:'24px', padding:'28px', border:'1px solid rgba(13,13,13,0.06)', boxShadow:'0 8px 32px rgba(13,13,13,0.05)'}}>
+                <div style={{fontSize:'1.8rem', marginBottom:'16px'}}></div>
+                <strong style={{fontSize:'1rem', display:'block', marginBottom:'10px'}}>One Source of Truth</strong>
+                <p style={{margin:0, color:'rgba(13,13,13,0.65)', fontSize:'0.95rem', lineHeight:1.75}}>Keep every idea, decision, and design in one place so nothing gets lost in chat threads or emails.</p>
+              </div>
+
+              <div style={{background:'#fff', borderRadius:'24px', padding:'28px', border:'1px solid rgba(13,13,13,0.06)', boxShadow:'0 8px 32px rgba(13,13,13,0.05)'}}>
+                <div style={{fontSize:'1.8rem', marginBottom:'16px'}}></div>
+                <strong style={{fontSize:'1rem', display:'block', marginBottom:'10px'}}>Start in Seconds</strong>
+                <p style={{margin:0, color:'rgba(13,13,13,0.65)', fontSize:'0.95rem', lineHeight:1.75}}>No onboarding maze. Open a board, invite your team, and start building — all within one minute.</p>
+              </div>
+
             </div>
           </section>
         </div>
