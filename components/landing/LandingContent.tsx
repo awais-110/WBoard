@@ -143,7 +143,7 @@ export default function LandingContent() {
                 <div style={{fontSize:'1.8rem', marginBottom:'16px'}}>
                 </div>
                 <strong style={{fontSize:'1rem', display:'block', marginBottom:'10px'}}>Real-Time Collaboration</strong>
-                <p style={{margin:0, color:'rgba(13,13,13,0.65)', fontSize:'0.95rem', lineHeight:1.75}}>See your team's cursors live. No refresh, no delays — just instant shared thinking on one canvas.</p>
+                <p style={{margin:0, color:'rgba(13,13,13,0.65)', fontSize:'0.95rem', lineHeight:1.75}}>See your team&apos;s cursors live. No refresh, no delays — just instant shared thinking on one canvas.</p>
               </div>
 
               <div style={{background:'#fff', borderRadius:'24px', padding:'28px', border:'1px solid rgba(13,13,13,0.06)', boxShadow:'0 8px 32px rgba(13,13,13,0.05)'}}>

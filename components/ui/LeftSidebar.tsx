@@ -7,10 +7,6 @@ import { cn } from '@/lib/utils'
 import { useCanvasStore } from '@/stores/canvasStore'
 import type { ToolType } from '@/types/canvas'
 
-interface LeftSidebarProps {
-  canEdit: boolean
-}
-
 const TOOLS: Array<{ type: ToolType; icon: ElementType; label: string; shortcut: string }> = [
   { type: 'select', icon: MousePointer2, label: 'Select', shortcut: 'V' },
   { type: 'pen', icon: Pencil, label: 'Pen', shortcut: 'P' },
@@ -20,7 +16,7 @@ const TOOLS: Array<{ type: ToolType; icon: ElementType; label: string; shortcut:
   { type: 'text', icon: Type, label: 'Text', shortcut: 'T' },
 ]
 
-export default function LeftSidebar({ canEdit }: LeftSidebarProps) {
+export default function LeftSidebar() {
   const {
     activeTool,
     setActiveTool,

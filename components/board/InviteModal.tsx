@@ -3,10 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
-import { BadgeCheck, Crown, Mail, Shield, Sparkles, Users, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import toast from 'react-hot-toast'
-import type { BoardRole } from '@/types/board'
-import { cn } from '@/lib/utils'
 
 interface InviteModalProps {
   boardId: string
@@ -16,7 +14,6 @@ interface InviteModalProps {
 
 export default function InviteModal({ boardId, onClose, anchorRect }: InviteModalProps) {
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<BoardRole>('editor')
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
   const popupRef = useRef<HTMLDivElement | null>(null)
@@ -58,7 +55,7 @@ export default function InviteModal({ boardId, onClose, anchorRect }: InviteModa
       // insert member
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const membersTable = supabase.from('board_members') as any
-      const { error } = await membersTable.insert({ board_id: boardId, user_id: profile.id, role })
+      const { error } = await membersTable.insert({ board_id: boardId, user_id: profile.id, role: 'editor' })
 
       if (error) {
         if ((error as any).code === '23505') {
@@ -67,7 +64,7 @@ export default function InviteModal({ boardId, onClose, anchorRect }: InviteModa
           toast.error((error as any).message || 'Failed to invite')
         }
       } else {
-        toast.success(`${email} added as ${role}`)
+        toast.success(`${email} added as editor`)
         setEmail('')
         onClose()
       }
@@ -133,30 +130,5 @@ export default function InviteModal({ boardId, onClose, anchorRect }: InviteModa
       </div>
     </div>,
     document.body
-  )
-}
-
-function RoleChip({ icon, label, active }: { icon: React.ReactNode; label: string; active?: boolean }) {
-  return (
-    <div
-      className={cn(
-        'inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition-all',
-        active ? 'border-cyan-400/30 bg-cyan-400/10 text-cyan-100' : 'border-white/10 bg-[#0b0b0b] text-white/70'
-      )}
-    >
-      <span className={cn('flex h-7 w-7 items-center justify-center rounded-full', active ? 'bg-cyan-400/15 text-cyan-200' : 'bg-white/5 text-white/70')}>
-        {icon}
-      </span>
-      <span className="font-medium">{label}</span>
-    </div>
-  )
-}
-
-function InfoRow({ text }: { text: string }) {
-  return (
-    <div className="flex items-start gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-cyan-300" />
-      <span>{text}</span>
-    </div>
   )
 }

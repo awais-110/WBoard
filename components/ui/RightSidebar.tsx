@@ -34,7 +34,7 @@ export default function RightSidebar({ fabricRef, isCollapsed, onToggleCollapse 
   const [tab, setTab] = useState<Tab>('properties')
   const [selected, setSelected] = useState<fabric.Object | null>(null)
   const [layers, setLayers] = useState<fabric.Object[]>([])
-  const { strokeColor, setStrokeColor, fillColor, setFillColor, strokeWidth, setStrokeWidth, opacity, setOpacity } = useCanvasStore()
+  const { strokeColor, setStrokeColor, fillColor, setFillColor, strokeWidth, setStrokeWidth } = useCanvasStore()
 
   const refresh = useCallback(() => {
     const canvas = fabricRef.current

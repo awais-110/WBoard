@@ -86,7 +86,7 @@ export default function BoardContent({ board, canEdit }: BoardContentProps) {
       </div>
 
       <div className="flex h-full min-h-0 pt-14 sm:pt-14">
-        <LeftSidebar canEdit={canEdit} />
+        <LeftSidebar />
 
         <main className="relative min-w-0 flex-1 overflow-hidden p-3 sm:p-4">
           <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border border-black/[0.08] bg-white shadow-[0_24px_80px_rgba(13,13,13,0.08)]">
