@@ -53,7 +53,7 @@ export function usePresence(boardId: string) {
           })
           .map((u) => ({ ...u }))
 
-        setPresenceUsers(users)
+          setPresenceUsers(users)
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -89,12 +89,30 @@ export function usePresence(boardId: string) {
       try {
         const ch = channelRef[boardId]
         if (!ch || !selfPresenceRef.current) return
-        selfPresenceRef.current = {
-          ...selfPresenceRef.current,
-          cursor: { x, y },
-          online_at: new Date().toISOString(),
+        // Throttle cursor updates to avoid flooding the presence channel.
+        // Batch coords and send via requestAnimationFrame at most ~60fps.
+        const pending = (selfPresenceRef.current as any).__pending__ || {}
+        pending.cursor = { x, y }
+        pending.online_at = new Date().toISOString()
+        ;(selfPresenceRef.current as any).__pending__ = pending
+
+        if (!(selfPresenceRef.current as any).__raf__) {
+          ;(selfPresenceRef.current as any).__raf__ = requestAnimationFrame(() => {
+            const p = (selfPresenceRef.current as any).__pending__
+            if (!p) {
+              ;(selfPresenceRef.current as any).__raf__ = null
+              return
+            }
+            selfPresenceRef.current = {
+              ...selfPresenceRef.current,
+              cursor: p.cursor,
+              online_at: p.online_at,
+            }
+            try { ch.track(selfPresenceRef.current) } catch {}
+            ;(selfPresenceRef.current as any).__pending__ = null
+            ;(selfPresenceRef.current as any).__raf__ = null
+          })
         }
-        ch.track(selfPresenceRef.current)
       } catch {}
     },
     [boardId]

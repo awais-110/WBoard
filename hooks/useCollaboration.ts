@@ -67,8 +67,15 @@ export function useCollaboration({ boardId, fabricRef }: UseCollaborationOptions
   )
 
   useEffect(() => {
-    const channel = supabase
-      .channel(`board:${boardId}`)
+    const channel = supabase.channel(`board:${boardId}`)
+
+    // Cache current user id to avoid calling auth.getUser() for every incoming event
+    const currentUserRef = { id: null as string | null }
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      currentUserRef.id = user?.id ?? null
+    })
+
+    channel
       .on(
         'postgres_changes',
         {
@@ -84,11 +91,9 @@ export function useCollaboration({ boardId, fabricRef }: UseCollaborationOptions
             user_id: string
           }
           // Ignore own events (already applied locally)
-          supabase.auth.getUser().then(({ data: { user } }) => {
-            if (user?.id !== event.user_id) {
-              applyRemoteEvent(event.event_type, event.payload)
-            }
-          })
+          if (currentUserRef.id !== event.user_id) {
+            applyRemoteEvent(event.event_type, event.payload)
+          }
         }
       )
       .subscribe()

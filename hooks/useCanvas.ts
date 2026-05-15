@@ -151,11 +151,25 @@ export function useCanvas({
       debouncedSave()
     }
 
+    const modifiedTimers: Record<string, ReturnType<typeof setTimeout>> = {}
     const handleObjectModified = (event: any) => {
       const target = event.target
       if (!target || suppressHistoryRef.current) return
       onObjectModified?.(target)
-      void broadcastCanvasEvent(boardId, 'object:modified', target.toObject())
+
+      // Batch rapid modifications per object id to avoid flooding realtime channel
+      const id = (target as any).id as string | undefined
+      const payload = target.toObject()
+      if (id) {
+        if (modifiedTimers[id]) clearTimeout(modifiedTimers[id])
+        modifiedTimers[id] = setTimeout(() => {
+          void broadcastCanvasEvent(boardId, 'object:modified', payload)
+          delete modifiedTimers[id]
+        }, 120)
+      } else {
+        void broadcastCanvasEvent(boardId, 'object:modified', payload)
+      }
+
       debouncedSave()
     }
 
