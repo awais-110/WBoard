@@ -27,6 +27,24 @@ const cardVariants = [
 export default function BoardCard({ board, variant = 0, onDelete, loading = false }: BoardCardProps) {
   const [preview, setPreview] = useState<string | null>(board?.thumbnail_url ?? null)
   const variantClass = cardVariants[variant % cardVariants.length]
+  useEffect(() => {
+    if (!board) return
+    if (board.thumbnail_url || !board.canvas_data?.objects?.length) return
+
+    const element = document.createElement('canvas')
+    const canvas = new fabric.StaticCanvas(element, {
+      width: 480,
+      height: 270,
+      backgroundColor: '#ffffff',
+    })
+
+    canvas.loadFromJSON(board.canvas_data, () => {
+      canvas.setZoom(0.35)
+      canvas.renderAll()
+      setPreview(canvas.toDataURL({ format: 'png', multiplier: 1 }))
+      canvas.dispose()
+    })
+  }, [board])
 
   if (loading) {
     return (
@@ -55,24 +73,7 @@ export default function BoardCard({ board, variant = 0, onDelete, loading = fals
   const timeAgo = getTimeAgo(board!.updated_at)
   const collaboratorCount = board!.members?.length ?? 1
 
-  useEffect(() => {
-    if (!board) return
-    if (board.thumbnail_url || !board.canvas_data?.objects?.length) return
-
-    const element = document.createElement('canvas')
-    const canvas = new fabric.StaticCanvas(element, {
-      width: 480,
-      height: 270,
-      backgroundColor: '#ffffff',
-    })
-
-    canvas.loadFromJSON(board.canvas_data, () => {
-      canvas.setZoom(0.35)
-      canvas.renderAll()
-      setPreview(canvas.toDataURL({ format: 'png', multiplier: 1 }))
-      canvas.dispose()
-    })
-  }, [board?.canvas_data, board?.thumbnail_url])
+  
 
   return (
     <Link href={`/dashboard/board/${board!.id}`} className="group block h-full">

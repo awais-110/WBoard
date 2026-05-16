@@ -310,7 +310,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
     setServerError('')
     const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || window.location.origin).replace(/\/$/, '')
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${siteUrl}/auth/callback`,
@@ -324,7 +324,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
         setServerError(error.message)
         setGoogleLoading(false)
       }
-    } catch (err) {
+    } catch {
       setServerError('Google login failed')
       setGoogleLoading(false)
     }

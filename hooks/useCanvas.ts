@@ -30,6 +30,14 @@ interface UseCanvasOptions {
   onObjectRemoved?: (obj: fabric.Object) => void
 }
 
+// Event flush timer and flush function retained for compatibility with previous
+// queue-based implementation. Current broadcasting sends immediately, so
+// these are no-ops but must exist to satisfy cleanup references.
+let eventFlushTimer: ReturnType<typeof setInterval> | null = null
+async function flushEventQueue(): Promise<void> {
+  return
+}
+
 export function useCanvas({
   boardId,
   canEdit,

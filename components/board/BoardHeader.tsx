@@ -23,6 +23,17 @@ interface BoardHeaderProps {
 }
 
 export default function BoardHeader({ board, canEdit, fabricRef, loading }: BoardHeaderProps) {
+  const { presenceUsers } = useCollaborationStore(
+    useShallow((state) => ({ presenceUsers: state.presenceUsers }))
+  )
+  const supabase = useMemo(() => createClient(), [])
+  const [title, setTitle] = useState(board.title)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [showInvite, setShowInvite] = useState(false)
+  const [showExport, setShowExport] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const [showAI, setShowAI] = useState(false)
+
   if (loading) {
     return (
       <header className="border-t border-[#2a2a2a] bg-[#1a1a1a]/95 backdrop-blur">
@@ -38,16 +49,6 @@ export default function BoardHeader({ board, canEdit, fabricRef, loading }: Boar
       </header>
     )
   }
-  const { presenceUsers } = useCollaborationStore(
-    useShallow((state) => ({ presenceUsers: state.presenceUsers }))
-  )
-  const supabase = useMemo(() => createClient(), [])
-  const [title, setTitle] = useState(board.title)
-  const [editingTitle, setEditingTitle] = useState(false)
-  const [showInvite, setShowInvite] = useState(false)
-  const [showExport, setShowExport] = useState(false)
-  const [showHistory, setShowHistory] = useState(false)
-  const [showAI, setShowAI] = useState(false)
 
   async function handleLogout() {
     await supabase.auth.signOut()
