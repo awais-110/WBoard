@@ -497,14 +497,16 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
 
               {/* Turnstile CAPTCHA */}
               {siteKey && (
-                <div style={{ display: 'flex', justifyContent: 'center', margin: '4px 0' }}>
-                  <Turnstile
-                    ref={turnstileRef}
-                    siteKey={siteKey}
-                    onSuccess={(token) => setTurnstileToken(token)}
-                    onExpire={() => setTurnstileToken(null)}
-                    onError={() => setTurnstileToken(null)}
-                  />
+                <div style={{ margin: '12px 0', display: 'flex', justifyContent: 'center' }}>
+                  <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid #E0DDD6', transform: 'scale(0.95)', transformOrigin: 'center' }}>
+                    <Turnstile
+                      ref={turnstileRef}
+                      siteKey={siteKey}
+                      onSuccess={(token) => setTurnstileToken(token)}
+                      onExpire={() => setTurnstileToken(null)}
+                      onError={() => setTurnstileToken(null)}
+                    />
+                  </div>
                 </div>
               )}
 
@@ -691,7 +693,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
 
         .auth-form {
           display: grid;
-          gap: 14px;
+          gap: 16px;
         }
 
         .field-group {
@@ -841,7 +843,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
         .submit-button {
           width: 100%;
           height: 42px;
-          margin-top: 20px;
+          margin-top: 8px;
           padding: 0 18px;
           border: none;
           border-radius: 100px;
