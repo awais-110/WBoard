@@ -11,6 +11,7 @@ interface BoardGridProps {
   allowDelete?: boolean
   emptyTitle?: string
   emptyDescription?: string
+  loading?: boolean
 }
 
 /**
@@ -21,6 +22,7 @@ export default function BoardGrid({
   allowDelete = true,
   emptyTitle = 'No boards yet',
   emptyDescription = 'Create your first whiteboard and start sketching ideas with your team.',
+  loading = false,
 }: BoardGridProps) {
   const [boards, setBoards] = useState(initialBoards)
   const router = useRouter()
@@ -35,6 +37,16 @@ export default function BoardGrid({
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete board')
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <BoardCard key={`skeleton-${i}`} loading variant={i} />
+        ))}
+      </div>
+    )
   }
 
   if (boards.length === 0) {

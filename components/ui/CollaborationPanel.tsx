@@ -5,7 +5,7 @@ import { MessageSquare, UserPlus, X, Users } from 'lucide-react'
 import { useCollaborationStore } from '@/stores/collaborationStore'
 import { useShallow } from 'zustand/react/shallow'
 
-export default function CollaborationPanel() {
+export default function CollaborationPanel({ loading }: { loading?: boolean } = {}) {
   const [open, setOpen] = useState(false)
   const { presenceUsers } = useCollaborationStore(
     useShallow((state) => ({ presenceUsers: state.presenceUsers }))
@@ -43,7 +43,7 @@ export default function CollaborationPanel() {
     )
   }
 
-  return (
+    return (
     <div className="pointer-events-auto absolute right-2 top-2 z-30 w-[min(16rem,calc(100%-1rem))] rounded-xl border border-[#2a2a2a] bg-[#1a1a1a]/90 p-3 text-white shadow-2xl backdrop-blur sm:right-4 sm:top-4 sm:w-64">
       <div className="flex items-center justify-between mb-2">
         <div className="text-sm font-semibold text-white">Collaborators</div>
@@ -60,26 +60,36 @@ export default function CollaborationPanel() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-1">
-        {uniqueUsers.length === 0 ? (
-          <div className="rounded-lg bg-[#0f0f0f] p-3 text-xs text-white/50">No collaborators online</div>
-        ) : (
-          uniqueUsers.map((u) => (
-            <div key={u.userId} className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-[#2a2a2a]">
-              <div
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
-                style={{ backgroundColor: u.color }}
-              >
-                {u.fullName ? u.fullName.split(' ').map((p) => p[0]).slice(0, 2).join('') : '??'}
+        <div className="flex flex-col gap-1">
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg px-2 py-1.5">
+                <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-[#2a2a2a] animate-pulse" />
+                <div className="min-w-0 flex-1 truncate">
+                  <div className="h-4 w-28 rounded-md bg-gray-200 dark:bg-[#2a2a2a] animate-pulse" />
+                </div>
+                <div className="h-2 w-2 rounded-full bg-white/25" />
               </div>
-              <div className="min-w-0 flex-1 truncate text-sm font-medium text-white/75">
-                {u.fullName ?? 'Anonymous'}
+            ))
+          ) : uniqueUsers.length === 0 ? (
+            <div className="rounded-lg bg-[#0f0f0f] p-3 text-xs text-white/50">No collaborators online</div>
+          ) : (
+            uniqueUsers.map((u) => (
+              <div key={u.userId} className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-[#2a2a2a]">
+                <div
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+                  style={{ backgroundColor: u.color }}
+                >
+                  {u.fullName ? u.fullName.split(' ').map((p) => p[0]).slice(0, 2).join('') : '??'}
+                </div>
+                <div className="min-w-0 flex-1 truncate text-sm font-medium text-white/75">
+                  {u.fullName ?? 'Anonymous'}
+                </div>
+                <div className={`h-2 w-2 shrink-0 rounded-full ${u.cursor ? 'bg-emerald-500' : 'bg-white/25'}`} />
               </div>
-              <div className={`h-2 w-2 shrink-0 rounded-full ${u.cursor ? 'bg-emerald-500' : 'bg-white/25'}`} />
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
 
       <div className="mt-3">
         <button

@@ -18,12 +18,15 @@ import type { ToolType } from '@/types/canvas'
 interface BoardContentProps {
   board: Board
   canEdit: boolean
+  loading?: boolean
 }
 
-export default function BoardContent({ board, canEdit }: BoardContentProps) {
+export default function BoardContent({ board, canEdit, loading }: BoardContentProps) {
   const fabricRef = useRef<fabric.Canvas | null>(null)
   const { saveSnapshot, undo, redo } = useHistory(fabricRef)
   const [isRightSidebarCollapsed, setIsRightSidebarCollapsed] = useState(false)
+  const [canvasReady, setCanvasReady] = useState(false)
+  const [showOverlay, setShowOverlay] = useState(true)
 
   // Stable callback — empty deps, writes into ref directly (no setState)
   const handleCanvasReady = useCallback(
@@ -32,6 +35,10 @@ export default function BoardContent({ board, canEdit }: BoardContentProps) {
     },
     [] // no setState called here, so no re-render triggered
   )
+
+  const handleCanvasMounted = useCallback(() => {
+    setCanvasReady(true)
+  }, [])
 
   const handleDeleteSelected = useCallback(() => {
     const canvas = fabricRef.current
@@ -79,8 +86,34 @@ export default function BoardContent({ board, canEdit }: BoardContentProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [undo, redo, handleDeleteSelected])
 
+  const showLoading = loading || !canvasReady
+
+  useEffect(() => {
+    const minimum = window.setTimeout(() => setShowOverlay(false), 300)
+    const maximum = window.setTimeout(() => setShowOverlay(false), 1500)
+    if (!showLoading) {
+      setShowOverlay(false)
+    } else {
+      setShowOverlay(true)
+    }
+
+    return () => {
+      window.clearTimeout(minimum)
+      window.clearTimeout(maximum)
+    }
+  }, [showLoading])
+
   return (
-    <div className="h-[100dvh] overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(10,191,188,0.08),_transparent_28%),linear-gradient(180deg,#faf8f4_0%,#f3efe8_100%)] text-[#0d0d0d]">
+    <div className="relative h-[100dvh] overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(10,191,188,0.08),_transparent_28%),linear-gradient(180deg,#faf8f4_0%,#f3efe8_100%)] text-[#0d0d0d]">
+      <div className={`absolute inset-0 z-[60] bg-[#f7f5f0] transition-opacity duration-300 ${showOverlay ? 'opacity-100' : 'pointer-events-none opacity-0'}`} aria-hidden>
+        <div className="flex h-full items-center justify-center">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-black/[0.08] bg-white/80 px-6 py-5 shadow-[0_18px_45px_rgba(13,13,13,0.08)] backdrop-blur-sm">
+            <div className="h-12 w-12 rounded-full border-4 border-[#0ABFBC]/25 border-t-[#0ABFBC] opacity-50 animate-spin" />
+            <div className="text-sm font-medium text-[#0d0d0d]/65">Loading board…</div>
+          </div>
+        </div>
+      </div>
+
       <div className="fixed inset-x-0 top-0 z-50 border-b border-black/[0.08] bg-[#f7f5f0]/90 shadow-[0_10px_30px_rgba(13,13,13,0.06)] backdrop-blur-xl">
         <TopNavbar boardName={board.title || 'Board'} boardId={board.id} canEdit={canEdit} onUndo={handleUndo} onRedo={handleRedo} onClear={handleClear} />
       </div>
@@ -96,6 +129,7 @@ export default function BoardContent({ board, canEdit }: BoardContentProps) {
                 initialData={board.canvas_data}
                 canEdit={canEdit}
                 onCanvasReady={handleCanvasReady}
+                onReady={handleCanvasMounted}
               />
               <StickyNotesLayer />
             </div>

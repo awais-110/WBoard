@@ -19,9 +19,25 @@ interface BoardHeaderProps {
   board: Board
   canEdit: boolean
   fabricRef: React.MutableRefObject<fabric.Canvas | null>
+  loading?: boolean
 }
 
-export default function BoardHeader({ board, canEdit, fabricRef }: BoardHeaderProps) {
+export default function BoardHeader({ board, canEdit, fabricRef, loading }: BoardHeaderProps) {
+  if (loading) {
+    return (
+      <header className="border-t border-[#2a2a2a] bg-[#1a1a1a]/95 backdrop-blur">
+        <div className="flex h-14 items-center gap-1.5 px-2 sm:h-12 sm:gap-3 sm:px-3 lg:px-4">
+          <div className="h-10 w-10 rounded-lg bg-gray-200 dark:bg-[#2a2a2a] animate-pulse" />
+          <div className="min-w-0 flex-1">
+            <div className="h-5 w-48 rounded-md bg-gray-200 dark:bg-[#2a2a2a] animate-pulse" />
+          </div>
+          <div className="hidden items-center gap-2 md:flex">
+            <div className="h-7 w-28 rounded-md bg-gray-200 dark:bg-[#2a2a2a] animate-pulse" />
+          </div>
+        </div>
+      </header>
+    )
+  }
   const { presenceUsers } = useCollaborationStore(
     useShallow((state) => ({ presenceUsers: state.presenceUsers }))
   )
@@ -62,10 +78,11 @@ export default function BoardHeader({ board, canEdit, fabricRef }: BoardHeaderPr
     <header className="border-t border-[#2a2a2a] bg-[#1a1a1a]/95 backdrop-blur">
       <div className="flex h-14 items-center gap-1.5 px-2 sm:h-12 sm:gap-3 sm:px-3 lg:px-4">
         <Link
-          href="/"
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] text-white/70 transition-colors hover:bg-[#2a2a2a] hover:text-white sm:h-9 sm:w-9"
+          href="/dashboard"
+          className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] px-3 text-white/70 transition-colors hover:bg-[#2a2a2a] hover:text-white sm:h-9"
         >
           <ChevronLeft size={18} />
+          <span className="hidden sm:inline">Workspace</span>
         </Link>
 
         <div className="min-w-0 flex-1">

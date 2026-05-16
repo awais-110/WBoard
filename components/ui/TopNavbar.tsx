@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertCircle, CheckCircle2, Clock, Download, Loader2, LogOut, MessageSquare, RotateCcw, Grid3x3, Hash, Share2, Sparkles, Trash2, UserPlus, Users, X } from 'lucide-react'
+import Link from 'next/link'
+import { AlertCircle, CheckCircle2, ChevronLeft, Clock, Download, Loader2, LogOut, MessageSquare, RotateCcw, Grid3x3, Hash, Share2, Sparkles, Trash2, UserPlus, Users, X } from 'lucide-react'
 import { exportAsPng, exportAsSvg } from '@/lib/fabric/export'
 import { useShallow } from 'zustand/react/shallow'
 import { useSaveStore } from '@/stores/saveStore'
@@ -118,6 +119,13 @@ export default function TopNavbar({
     <>
       <div className="flex h-14 w-full items-center justify-between gap-3 border-b border-black/[0.08] bg-[#f7f5f0]/95 px-3 text-[#0d0d0d] sm:px-4">
         <div className="flex min-w-0 items-center gap-3">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1 rounded-full border border-black/[0.08] bg-black/[0.04] px-3 py-1.5 text-sm text-[#0d0d0d]/65 transition-all duration-200 hover:bg-black/[0.08] hover:text-[#0d0d0d]"
+          >
+            <ChevronLeft size={14} />
+            <span>Workspace</span>
+          </Link>
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#0d0d0d] text-xs font-semibold text-white shadow-[0_8px_24px_rgba(13,13,13,0.18)]">
             {boardName.charAt(0).toUpperCase()}
           </div>

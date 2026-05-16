@@ -16,6 +16,7 @@ interface CanvasProps {
   initialData: CanvasData
   canEdit: boolean
   onCanvasReady?: (fabricRef: React.MutableRefObject<fabric.Canvas | null>) => void
+  onReady?: () => void
 }
 
 export default function Canvas({
@@ -23,6 +24,7 @@ export default function Canvas({
   initialData,
   canEdit,
   onCanvasReady,
+  onReady,
 }: CanvasProps) {
   const { canvasRef, fabricRef } = useCanvas({ boardId, canEdit })
   const { updateCursor } = usePresence(boardId)
@@ -34,11 +36,14 @@ export default function Canvas({
 
   const [isEmpty, setIsEmpty] = useState(!(initialData?.objects?.length))
   const onCanvasReadyRef = useRef(onCanvasReady)
+  const onReadyRef = useRef(onReady)
   const hasNotifiedRef = useRef(false)
+  const hasReadyNotifiedRef = useRef(false)
   const initialDataRef = useRef(initialData)
   const cursorTsRef = useRef(0)
 
   useEffect(() => { onCanvasReadyRef.current = onCanvasReady }, [onCanvasReady])
+  useEffect(() => { onReadyRef.current = onReady }, [onReady])
 
   // Notify parent once
   useEffect(() => {
@@ -49,12 +54,28 @@ export default function Canvas({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    if (fabricRef.current && !initialDataRef.current?.objects?.length && onReadyRef.current && !hasReadyNotifiedRef.current) {
+      hasReadyNotifiedRef.current = true
+      onReadyRef.current()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Load initial data once
   useEffect(() => {
     if (fabricRef.current && initialDataRef.current?.objects?.length) {
       deserializeCanvas(fabricRef.current, initialDataRef.current).then(() => {
         setIsEmpty(false)
+        if (onReadyRef.current && !hasReadyNotifiedRef.current) {
+          hasReadyNotifiedRef.current = true
+          onReadyRef.current()
+        }
       })
+    }
+    if (fabricRef.current && !initialDataRef.current?.objects?.length && onReadyRef.current && !hasReadyNotifiedRef.current) {
+      hasReadyNotifiedRef.current = true
+      onReadyRef.current()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

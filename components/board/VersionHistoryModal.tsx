@@ -7,9 +7,10 @@ interface VersionHistoryModalProps {
   boardId: string
   fabricRef: React.MutableRefObject<any>
   onClose: () => void
+  loading?: boolean
 }
 
-export default function VersionHistoryModal({ boardId, fabricRef, onClose }: VersionHistoryModalProps) {
+export default function VersionHistoryModal({ boardId, fabricRef, onClose, loading: propLoading }: VersionHistoryModalProps) {
   const [snapshots, setSnapshots] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -62,8 +63,18 @@ export default function VersionHistoryModal({ boardId, fabricRef, onClose }: Ver
           <button onClick={onClose} className="rounded-lg px-3 py-1 text-sm text-white/55 hover:bg-[#2a2a2a] hover:text-white">Close</button>
         </div>
         <div className="space-y-2 max-h-96 overflow-auto">
-          {snapshots.length === 0 ? (
-            <div className="rounded-lg bg-[#0f0f0f] p-3 text-sm text-white/50">No saved versions available.</div>
+          {(propLoading || (snapshots.length === 0 && loading)) ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-3 rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="h-4 w-40 rounded-md bg-gray-200 dark:bg-[#2a2a2a] animate-pulse" />
+                  <div className="mt-2 h-3 w-28 rounded-md bg-gray-200 dark:bg-[#2a2a2a] animate-pulse" />
+                </div>
+                <div className="flex gap-2">
+                  <div className="h-9 w-24 rounded-md bg-gray-200 dark:bg-[#2a2a2a] animate-pulse" />
+                </div>
+              </div>
+            ))
           ) : (
             snapshots.map((s, i) => (
               <div key={i} className="flex flex-col gap-3 rounded-lg border border-[#2a2a2a] bg-[#0f0f0f] p-3 sm:flex-row sm:items-center sm:justify-between">
