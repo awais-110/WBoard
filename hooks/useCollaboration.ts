@@ -39,9 +39,9 @@ export function useCollaboration({ boardId, fabricRef }: UseCollaborationOptions
         }
         case 'object:modified': {
           const objects = canvas.getObjects()
-          const target = objects.find(
-            (o) => (o as fabric.Object & { id?: string }).id === (payload.id as string)
-          )
+          const target =
+            objects.find((o) => (o as fabric.Object & { id?: string }).id === (payload.id as string)) ??
+            objects[(payload.index as number) ?? -1]
           if (target) {
             target.set(payload as Partial<fabric.Object>)
             target.setCoords()

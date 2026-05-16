@@ -66,6 +66,29 @@ export function addStickyNote(
 
 export { STICKY_COLORS }
 
+export async function broadcastCanvasEvent(
+  boardId: string,
+  eventType: string,
+  payload: Record<string, any>
+): Promise<void> {
+  try {
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await (supabase.from('canvas_events') as any).insert([
+      {
+        board_id: boardId,
+        user_id: user.id,
+        event_type: eventType,
+        payload,
+      },
+    ] as any)
+  } catch (err) {
+    console.error('[broadcast] failed:', err)
+  }
+}
+
 // ─── Rectangle ──────────────────────────────────────────────────────────────
 
 export function addRectangle(

@@ -11,6 +11,7 @@ import {
   addArrow,
   addStickyNote,
   addText,
+  broadcastCanvasEvent,
   disableFreeDraw,
   duplicateSelected,
   enableFreeDraw,
@@ -20,54 +21,6 @@ import { initializeCanvas, setupCanvasPan, setupCanvasResize } from '@/lib/fabri
 const MIN_ZOOM = 0.05
 const MAX_ZOOM = 5
 const ZOOM_FACTOR = 0.95
-
-async function broadcastCanvasEvent(
-  boardId: string,
-  eventType: CanvasEventType,
-  payload: Record<string, unknown>
-): Promise<void> {
-  // Queue the event for batch insertion. This avoids frequent single inserts
-  // and flushes events in short intervals (100ms) for near-instant collaboration.
-  enqueueCanvasEvent({ board_id: boardId, event_type: eventType, payload })
-}
-
-// Module-level queue & flush logic
-type QueuedEvent = { board_id: string; user_id?: string | null; event_type: CanvasEventType; payload: Record<string, unknown>; created_at?: string }
-const eventQueue: QueuedEvent[] = []
-let eventFlushTimer: ReturnType<typeof setInterval> | null = null
-let cachedUserId: string | null = null
-
-function enqueueCanvasEvent(evt: Omit<QueuedEvent, 'user_id' | 'created_at'>) {
-  eventQueue.push({ ...evt, user_id: cachedUserId ?? null, created_at: new Date().toISOString() })
-  if (!eventFlushTimer) {
-    // start periodic flush at ~100ms
-    eventFlushTimer = setInterval(() => void flushEventQueue(), 100)
-    // ensure we flush before the user navigates away
-    window.addEventListener('beforeunload', flushEventQueue)
-  }
-}
-
-async function flushEventQueue() {
-  if (eventQueue.length === 0) return
-  // take a snapshot
-  const toSend = eventQueue.splice(0, eventQueue.length)
-  try {
-    const supabase = createClient()
-    if (!cachedUserId) {
-      const { data: { user } } = await supabase.auth.getUser()
-      cachedUserId = user?.id ?? null
-    }
-    // ensure events have user_id
-    toSend.forEach((e) => {
-      if (!e.user_id) e.user_id = cachedUserId
-    })
-
-    const { error } = await (supabase.from('canvas_events') as any).insert(toSend)
-    if (error) console.error('[flushEventQueue]', error.message)
-  } catch (err) {
-    console.error('[flushEventQueue] unexpected', err)
-  }
-}
 
 interface UseCanvasOptions {
   boardId: string
