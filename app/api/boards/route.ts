@@ -12,14 +12,42 @@ export async function GET() {
 
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data, error } = await supabase
+  const { data: ownedBoards, error: ownedError } = await supabase
     .from('boards')
-    .select('*')
-    .or(`owner_id.eq.${user.id}`)
+    .select('*, board_members(id)')
+    .eq('owner_id', user.id)
     .order('updated_at', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  if (ownedError) return NextResponse.json({ error: ownedError.message }, { status: 500 })
+
+  const { data: sharedMemberships, error: sharedError } = await supabase
+    .from('board_members')
+    .select('role, boards(*)')
+    .eq('user_id', user.id)
+    .order('invited_at', { ascending: false })
+
+  if (sharedError) return NextResponse.json({ error: sharedError.message }, { status: 500 })
+
+  const owned = ((ownedBoards ?? []) as any[]).map((board) => ({
+    ...board,
+    access: 'owned',
+    members: board.board_members ?? [],
+  }))
+
+  const shared = ((sharedMemberships ?? []) as any[])
+    .map((membership) => {
+      const boardValue = Array.isArray(membership.boards) ? membership.boards[0] : membership.boards
+      if (!boardValue || boardValue.owner_id === user.id) return null
+
+      return {
+        ...boardValue,
+        access: 'shared',
+        role: membership.role,
+      }
+    })
+    .filter(Boolean)
+
+  return NextResponse.json([...owned, ...shared])
 }
 
 /**

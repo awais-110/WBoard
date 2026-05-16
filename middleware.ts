@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && isAuthPage) {
-    const redirectResponse = NextResponse.redirect(new URL('/', request.url))
+    const redirectResponse = NextResponse.redirect(new URL('/dashboard', request.url))
     response.cookies.getAll().forEach((cookie) => {
       redirectResponse.cookies.set(cookie)
     })
