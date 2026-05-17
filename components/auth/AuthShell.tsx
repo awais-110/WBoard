@@ -861,16 +861,25 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
           background: #E9E5E0;
           color: #9A938A;
           cursor: not-allowed;
+          opacity: 0.9;
+          pointer-events: none;
         }
 
+        /* Active state: primary brand Mint */
         .submit-button.active {
-          background: #D8D1C8;
-          color: #44403b;
+          background: #00A198;
+          color: #FFFFFF;
+          box-shadow: 0 8px 18px rgba(0, 161, 152, 0.18);
         }
 
         .submit-button.active:hover {
           transform: translateY(-2px);
-          box-shadow: 0 12px 30px rgba(13,13,13,0.06);
+          box-shadow: 0 14px 34px rgba(0, 161, 152, 0.22);
+        }
+
+        /* Make button appear clickable when enabled (form valid + captcha verified) */
+        .submit-button:not(.disabled) {
+          cursor: pointer;
         }
 
         .submit-button.success {
