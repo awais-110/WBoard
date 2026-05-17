@@ -62,7 +62,8 @@ export default function BottomToolbar({
   }
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-4 z-50 hidden justify-center px-3 md:flex">
+    <>
+      <div className="pointer-events-none absolute inset-x-0 bottom-4 z-50 hidden justify-center px-3 md:flex">
       <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-white/92 px-2 py-1.5 shadow-[0_16px_40px_rgba(13,13,13,0.08)] backdrop-blur-xl">
         {canEdit && (
           <DockGroup>
@@ -121,9 +122,9 @@ export default function BottomToolbar({
           </ZoomBtn>
         </div>
       </div>
-    </div>
-    {/* Mobile toolbar - visible only on small screens */}
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex flex-row items-center gap-2 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-black/10 px-3 py-2 overflow-x-auto max-w-[90vw] z-50 md:hidden pb-safe">
+      </div>
+      {/* Mobile toolbar - visible only on small screens */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex flex-row items-center gap-2 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-black/10 px-3 py-2 overflow-x-auto max-w-[90vw] z-50 md:hidden pb-safe">
       <div className="flex items-center gap-2">
         {canEdit && (
           <button onClick={handleSticky} title="Sticky note" className={cn('min-w-[40px] h-10 w-10 flex items-center justify-center rounded-xl text-[#0d0d0d]/70', 'hover:bg-black/[0.05]')}> 
@@ -179,7 +180,8 @@ export default function BottomToolbar({
           <Maximize2 size={20} />
         </button>
       </div>
-    </div>
+      </div>
+    </>
   )
 }
 
