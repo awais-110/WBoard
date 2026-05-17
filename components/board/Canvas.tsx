@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { PenTool, Pencil } from 'lucide-react'
 import { useCanvas } from '../../hooks/useCanvas'
 import { useCollaboration } from '@/hooks/useCollaboration'
 import { usePresence } from '@/hooks/usePresence'
@@ -26,13 +27,15 @@ export default function Canvas({
   onCanvasReady,
   onReady,
 }: CanvasProps) {
-  const { canvasRef, fabricRef } = useCanvas({ boardId, canEdit })
+  const { canvasRef, fabricRef, isRecognizing } = useCanvas({ boardId, canEdit })
   const { updateCursor } = usePresence(boardId)
   useCollaboration({ boardId, fabricRef })
 
   const showGrid = useCanvasStore((s) => s.showGrid)
   const gridSize = useCanvasStore((s) => s.gridSize)
   const setZoom = useCanvasStore((s) => s.setZoom)
+  const activeTool = useCanvasStore((s) => s.activeTool)
+  const setActiveTool = useCanvasStore((s) => s.setActiveTool)
 
   const [isEmpty, setIsEmpty] = useState(!(initialData?.objects?.length))
   const onCanvasReadyRef = useRef(onCanvasReady)
@@ -141,6 +144,30 @@ export default function Canvas({
     >
       <canvas ref={canvasRef} className="block" />
 
+      <div className="absolute left-3 top-3 z-30 flex gap-2 rounded-full border border-black/[0.08] bg-white/90 p-1 shadow-lg shadow-black/10 backdrop-blur-sm md:hidden">
+        <ToolButton
+          active={activeTool === 'pen'}
+          label="Pen"
+          icon={Pencil}
+          onClick={() => setActiveTool('pen')}
+        />
+        <ToolButton
+          active={activeTool === 'handwrite'}
+          label="Handwrite"
+          icon={PenTool}
+          onClick={() => setActiveTool('handwrite')}
+        />
+      </div>
+
+      {isRecognizing && (
+        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-white/45 backdrop-blur-[1px]">
+          <div className="flex items-center gap-3 rounded-full border border-black/[0.08] bg-white px-4 py-3 text-sm font-medium text-[#0d0d0d] shadow-lg shadow-black/10">
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#00A198]" />
+            Recognizing handwriting
+          </div>
+        </div>
+      )}
+
       {isEmpty && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-5">
           <div className="max-w-[300px] rounded-2xl border border-black/[0.08] bg-white/90 px-6 py-5 text-center shadow-lg shadow-black/[0.06] backdrop-blur-sm">
@@ -155,5 +182,31 @@ export default function Canvas({
 
       <CollaboratorCursors />
     </div>
+  )
+}
+
+interface ToolButtonProps {
+  active: boolean
+  label: string
+  icon: typeof Pencil
+  onClick: () => void
+}
+
+function ToolButton({ active, label, icon: Icon, onClick }: ToolButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        `flex h-10 items-center gap-2 rounded-full px-3 text-xs font-semibold transition-colors ${
+          active ? 'bg-[#00A198] text-white shadow-sm shadow-[#00A198]/25' : 'text-[#0d0d0d]/70 hover:bg-[#f2efe8] hover:text-[#0d0d0d]'
+        }`
+      }
+      aria-pressed={active}
+      aria-label={label}
+    >
+      <Icon className="h-4 w-4" />
+      <span className="hidden sm:inline">{label}</span>
+    </button>
   )
 }

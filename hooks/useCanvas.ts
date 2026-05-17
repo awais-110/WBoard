@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { fabric } from 'fabric'
 import { useShallow } from 'zustand/react/shallow'
 import { createClient } from '@/lib/supabase/client'
+import { useHandwritingRecognition } from '@/hooks/useHandwritingRecognition'
 import { useCanvasStore } from '@/stores/canvasStore'
 import { useSaveStore } from '@/stores/saveStore'
 import type { CanvasEventType, ToolType } from '@/types/canvas'
@@ -48,6 +49,8 @@ export function useCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<fabric.Canvas | null>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const handwritingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const handwritingPathIdsRef = useRef<Set<string>>(new Set())
   const cleanupRef = useRef<Array<() => void>>([])
   const drawingStateRef = useRef<{ startX: number; startY: number; tool: ToolType } | null>(null)
   const imageInputRef = useRef<HTMLInputElement | null>(null)
@@ -75,6 +78,68 @@ export function useCanvas({
       snapToGrid: state.snapToGrid,
       gridSize: state.gridSize,
     }))
+  )
+
+  const activeToolRef = useRef(activeTool)
+  const styleRef = useRef({ strokeColor, fillColor, strokeWidth, opacity, fontSize, fontFamily, snapToGrid, gridSize })
+  const { recognize, isRecognizing } = useHandwritingRecognition()
+
+  useEffect(() => {
+    activeToolRef.current = activeTool
+  }, [activeTool])
+
+  useEffect(() => {
+    styleRef.current = { strokeColor, fillColor, strokeWidth, opacity, fontSize, fontFamily, snapToGrid, gridSize }
+  }, [fillColor, fontFamily, fontSize, gridSize, opacity, snapToGrid, strokeColor, strokeWidth])
+
+  const runHandwritingRecognition = useCallback(
+    async (canvas: fabric.Canvas, debouncedSave: () => void) => {
+      if (isRecognizing) return
+
+      if (handwritingTimerRef.current) {
+        clearTimeout(handwritingTimerRef.current)
+        handwritingTimerRef.current = null
+      }
+
+      const pathIds = Array.from(handwritingPathIdsRef.current)
+      if (pathIds.length === 0) return
+
+      const paths = canvas
+        .getObjects()
+        .filter((object): object is fabric.Path => object.type === 'path' && pathIds.includes(ensureObjectId(object)))
+
+      if (paths.length === 0) {
+        handwritingPathIdsRef.current.clear()
+        return
+      }
+
+      const recognition = await recognize({ canvas, objects: paths, padding: 18, language: 'eng' })
+      if (!recognition) return
+
+      const text = recognition.text.trim()
+      if (!text) return
+
+      paths.forEach((path) => canvas.remove(path))
+
+      const textObject = new fabric.IText(text, {
+        left: recognition.left,
+        top: recognition.top,
+        fill: styleRef.current.strokeColor,
+        fontSize: Math.max(16, styleRef.current.fontSize),
+        fontFamily: styleRef.current.fontFamily,
+        editable: true,
+        selectable: true,
+        evented: true,
+        id: crypto.randomUUID(),
+      } as any)
+
+      canvas.add(textObject)
+      canvas.setActiveObject(textObject)
+      canvas.requestRenderAll()
+      handwritingPathIdsRef.current.clear()
+      debouncedSave()
+    },
+    [isRecognizing, recognize]
   )
 
   useEffect(() => {
@@ -171,7 +236,37 @@ export function useCanvas({
       debouncedSave()
     }
 
-    const onPathCreated = () => debouncedSave()
+    const onPathCreated = (event: fabric.IEvent) => {
+      const path = (event as fabric.IEvent & { path?: fabric.Path }).path
+      if (!path) {
+        debouncedSave()
+        return
+      }
+
+      const pathId = ensureObjectId(path)
+      const currentTool = activeToolRef.current
+
+      if (currentTool === 'handwrite') {
+        handwritingPathIdsRef.current.add(pathId)
+        if (handwritingTimerRef.current) clearTimeout(handwritingTimerRef.current)
+        handwritingTimerRef.current = setTimeout(() => {
+          void runHandwritingRecognition(canvas, debouncedSave)
+        }, 1000)
+        debouncedSave()
+        return
+      }
+
+      if (currentTool === 'pen') {
+        const detectedShape = detectFreehandShape(path)
+        if (detectedShape) {
+          replacePathWithShape(canvas, path, detectedShape)
+          debouncedSave()
+          return
+        }
+      }
+
+      debouncedSave()
+    }
 
     canvas.on('mouse:wheel', onMouseWheel)
     canvas.on('object:added', handleObjectAdded)
@@ -225,6 +320,12 @@ export function useCanvas({
     cleanupRef.current.push(() => canvas.off('path:created', onPathCreated))
     cleanupRef.current.push(() => window.removeEventListener('whiteboard:retry-save', handleRetrySave))
     cleanupRef.current.push(() => window.removeEventListener('keydown', handleKeyDown))
+    cleanupRef.current.push(() => {
+      if (handwritingTimerRef.current) {
+        clearTimeout(handwritingTimerRef.current)
+        handwritingTimerRef.current = null
+      }
+    })
 
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
@@ -299,7 +400,7 @@ export function useCanvas({
         return
       }
 
-      if (activeTool === 'pen') {
+      if (activeTool === 'pen' || activeTool === 'handwrite') {
         return
       }
 
@@ -469,7 +570,7 @@ export function useCanvas({
     canvas.requestRenderAll()
   }, [])
 
-  return { canvasRef, fabricRef, loadFromJSON, toJSON, clear, deleteSelected, zoomIn, zoomOut, zoomFit, alignObjects }
+  return { canvasRef, fabricRef, loadFromJSON, toJSON, clear, deleteSelected, zoomIn, zoomOut, zoomFit, alignObjects, isRecognizing }
 }
 
 function applyTool(
@@ -490,6 +591,7 @@ function applyTool(
 
   switch (tool) {
     case 'pen':
+    case 'handwrite':
       enableFreeDraw(canvas, opts.strokeColor, opts.strokeWidth)
       canvas.defaultCursor = 'crosshair'
       break
@@ -516,6 +618,279 @@ function applyTool(
       canvas.defaultCursor = 'crosshair'
       canvas.selection = false
   }
+}
+
+type FreehandShape = 'line' | 'rectangle' | 'circle' | 'triangle'
+
+function ensureObjectId(object: fabric.Object): string {
+  const existingId = (object as any).id as string | undefined
+  if (existingId) return existingId
+
+  const id = crypto.randomUUID()
+  object.set('id', id)
+  return id
+}
+
+function detectFreehandShape(path: fabric.Path): FreehandShape | null {
+  const points = extractPathPoints(path)
+  if (points.length < 4) return null
+
+  const bounds = path.getBoundingRect(true, true)
+  const start = points[0]
+  const end = points[points.length - 1]
+
+  if (isStraightStroke(points, bounds, start, end)) return 'line'
+  if (isCircleStroke(points, bounds, start, end)) return 'circle'
+  if (isTriangleStroke(points, bounds, start, end)) return 'triangle'
+  if (isRectangleStroke(points, bounds, start, end)) return 'rectangle'
+
+  return null
+}
+
+function replacePathWithShape(canvas: fabric.Canvas, path: fabric.Path, shape: FreehandShape): void {
+  const bounds = path.getBoundingRect(true, true)
+  const stroke = path.stroke ?? '#111827'
+  const strokeWidth = path.strokeWidth ?? 2
+  const id = ensureObjectId(path)
+
+  canvas.remove(path)
+
+  let replacement: fabric.Object | null = null
+
+  if (shape === 'line') {
+    replacement = new fabric.Line([bounds.left, bounds.top, bounds.left + bounds.width, bounds.top + bounds.height], {
+      left: bounds.left,
+      top: bounds.top,
+      stroke,
+      strokeWidth,
+      fill: '',
+      selectable: true,
+      evented: true,
+      strokeUniform: true,
+      id,
+    } as any)
+  }
+
+  if (shape === 'rectangle') {
+    replacement = new fabric.Rect({
+      left: bounds.left,
+      top: bounds.top,
+      width: Math.max(1, bounds.width),
+      height: Math.max(1, bounds.height),
+      fill: 'transparent',
+      stroke,
+      strokeWidth,
+      selectable: true,
+      evented: true,
+      id,
+    } as any)
+  }
+
+  if (shape === 'circle') {
+    replacement = new fabric.Ellipse({
+      left: bounds.left,
+      top: bounds.top,
+      rx: Math.max(1, bounds.width / 2),
+      ry: Math.max(1, bounds.height / 2),
+      fill: 'transparent',
+      stroke,
+      strokeWidth,
+      selectable: true,
+      evented: true,
+      id,
+    } as any)
+  }
+
+  if (shape === 'triangle') {
+    replacement = new fabric.Triangle({
+      left: bounds.left,
+      top: bounds.top,
+      width: Math.max(1, bounds.width),
+      height: Math.max(1, bounds.height),
+      fill: 'transparent',
+      stroke,
+      strokeWidth,
+      selectable: true,
+      evented: true,
+      id,
+    } as any)
+  }
+
+  if (!replacement) return
+
+  canvas.add(replacement)
+  canvas.setActiveObject(replacement)
+  canvas.requestRenderAll()
+}
+
+function extractPathPoints(path: fabric.Path): Array<{ x: number; y: number }> {
+  const points: Array<{ x: number; y: number }> = []
+  const segments = path.path as Array<Array<string | number>>
+
+  segments.forEach((segment) => {
+    const [command, ...values] = segment
+
+    if (command === 'M' || command === 'L') {
+      if (typeof values[0] === 'number' && typeof values[1] === 'number') {
+        points.push({ x: values[0], y: values[1] })
+      }
+      return
+    }
+
+    if (command === 'Q') {
+      if (typeof values[0] === 'number' && typeof values[1] === 'number') {
+        points.push({ x: values[0], y: values[1] })
+      }
+      if (typeof values[2] === 'number' && typeof values[3] === 'number') {
+        points.push({ x: values[2], y: values[3] })
+      }
+      return
+    }
+
+    if (command === 'C') {
+      if (typeof values[0] === 'number' && typeof values[1] === 'number') {
+        points.push({ x: values[0], y: values[1] })
+      }
+      if (typeof values[2] === 'number' && typeof values[3] === 'number') {
+        points.push({ x: values[2], y: values[3] })
+      }
+      if (typeof values[4] === 'number' && typeof values[5] === 'number') {
+        points.push({ x: values[4], y: values[5] })
+      }
+    }
+  })
+
+  return points.length > 0 ? points : [{ x: 0, y: 0 }]
+}
+
+function isStraightStroke(
+  points: Array<{ x: number; y: number }>,
+  bounds: fabric.IRect,
+  start: { x: number; y: number },
+  end: { x: number; y: number }
+): boolean {
+  const directDistance = distance(start, end)
+  if (directDistance < Math.max(24, Math.min(bounds.width, bounds.height) * 1.3)) return false
+
+  const pathLength = points.reduce((total, point, index) => {
+    if (index === 0) return total
+    return total + distance(points[index - 1], point)
+  }, 0)
+
+  const maxDeviation = points.reduce((max, point) => {
+    return Math.max(max, distanceToLine(point, start, end))
+  }, 0)
+
+  return pathLength / directDistance < 1.35 && maxDeviation < Math.max(12, Math.min(bounds.width, bounds.height) * 0.18)
+}
+
+function isCircleStroke(
+  points: Array<{ x: number; y: number }>,
+  bounds: fabric.IRect,
+  start: { x: number; y: number },
+  end: { x: number; y: number }
+): boolean {
+  const size = Math.max(bounds.width, bounds.height)
+  if (size < 28) return false
+
+  const ratio = bounds.width / Math.max(1, bounds.height)
+  const closedness = distance(start, end) < size * 0.35
+  if (!closedness || ratio < 0.75 || ratio > 1.35) return false
+
+  const center = { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 }
+  const distances = points.map((point) => distance(point, center))
+  const averageDistance = distances.reduce((sum, value) => sum + value, 0) / distances.length
+  const meanDeviation = distances.reduce((sum, value) => sum + Math.abs(value - averageDistance), 0) / distances.length
+
+  return meanDeviation / Math.max(averageDistance, 1) < 0.22
+}
+
+function isTriangleStroke(
+  points: Array<{ x: number; y: number }>,
+  bounds: fabric.IRect,
+  start: { x: number; y: number },
+  end: { x: number; y: number }
+): boolean {
+  if (!isClosedStroke(bounds, start, end)) return false
+  return countCorners(points) === 3
+}
+
+function isRectangleStroke(
+  points: Array<{ x: number; y: number }>,
+  bounds: fabric.IRect,
+  start: { x: number; y: number },
+  end: { x: number; y: number }
+): boolean {
+  if (!isClosedStroke(bounds, start, end)) return false
+  const corners = countCorners(points)
+  return corners >= 4 && corners <= 6
+}
+
+function isClosedStroke(bounds: fabric.IRect, start: { x: number; y: number }, end: { x: number; y: number }): boolean {
+  const size = Math.max(bounds.width, bounds.height)
+  return distance(start, end) < Math.max(20, size * 0.35)
+}
+
+function countCorners(points: Array<{ x: number; y: number }>): number {
+  const simplified = simplifyPoints(points, 6)
+  if (simplified.length < 4) return 0
+
+  let corners = 0
+
+  for (let index = 1; index < simplified.length - 1; index += 1) {
+    const previous = simplified[index - 1]
+    const current = simplified[index]
+    const next = simplified[index + 1]
+
+    const angleA = Math.atan2(current.y - previous.y, current.x - previous.x)
+    const angleB = Math.atan2(next.y - current.y, next.x - current.x)
+    const difference = Math.abs(normalizeAngle(angleB - angleA))
+
+    if (difference > Math.PI / 4) corners += 1
+  }
+
+  return corners
+}
+
+function simplifyPoints(points: Array<{ x: number; y: number }>, threshold: number): Array<{ x: number; y: number }> {
+  const simplified: Array<{ x: number; y: number }> = [points[0]]
+
+  for (let index = 1; index < points.length; index += 1) {
+    if (distance(points[index], simplified[simplified.length - 1]) >= threshold) {
+      simplified.push(points[index])
+    }
+  }
+
+  if (simplified.length === 1 && points.length > 1) {
+    simplified.push(points[points.length - 1])
+  }
+
+  return simplified
+}
+
+function distance(a: { x: number; y: number }, b: { x: number; y: number }): number {
+  return Math.hypot(a.x - b.x, a.y - b.y)
+}
+
+function distanceToLine(point: { x: number; y: number }, start: { x: number; y: number }, end: { x: number; y: number }): number {
+  const lineLength = distance(start, end)
+  if (lineLength === 0) return distance(point, start)
+
+  const numerator = Math.abs(
+    (end.y - start.y) * point.x -
+      (end.x - start.x) * point.y +
+      end.x * start.y -
+      end.y * start.x
+  )
+
+  return numerator / lineLength
+}
+
+function normalizeAngle(value: number): number {
+  let angle = value
+  while (angle > Math.PI) angle -= Math.PI * 2
+  while (angle < -Math.PI) angle += Math.PI * 2
+  return angle
 }
 
 function createShapePreview(

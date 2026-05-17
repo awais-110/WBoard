@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight, Circle, MousePointer2, Pencil, Square, Type } from 'lucide-react'
+import { ArrowRight, Circle, MousePointer2, Pencil, Square, PenTool, Type } from 'lucide-react'
 import type { ElementType } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { cn } from '@/lib/utils'
@@ -10,6 +10,12 @@ import type { ToolType } from '@/types/canvas'
 const TOOLS: Array<{ type: ToolType; icon: ElementType; label: string; shortcut: string }> = [
   { type: 'select', icon: MousePointer2, label: 'Select', shortcut: 'V' },
   { type: 'pen', icon: Pencil, label: 'Pen', shortcut: 'P' },
+  {
+    type: 'handwrite',
+    icon: PenTool,
+    label: 'Handwrite',
+    shortcut: 'H',
+  },
   { type: 'rectangle', icon: Square, label: 'Rectangle', shortcut: 'R' },
   { type: 'circle', icon: Circle, label: 'Circle', shortcut: 'O' },
   { type: 'arrow', icon: ArrowRight, label: 'Arrow', shortcut: 'A' },

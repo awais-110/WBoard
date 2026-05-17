@@ -29,6 +29,7 @@ export type ToolType =
   | 'arrow'
   | 'line'
   | 'text'
+  | 'handwrite'
   | 'sticky'
   | 'eraser'
   | 'pan'
