@@ -1,8 +1,10 @@
-'use client'
+"use client"
 
 import React, { useRef } from 'react'
-import BottomToolbar from '@/components/ui/BottomToolbar'
+import dynamic from 'next/dynamic'
 import type { fabric } from 'fabric'
+
+const BottomToolbar = dynamic(() => import('@/components/ui/BottomToolbar'), { ssr: false })
 
 export default function ToolbarPreview() {
   const fabricRef = useRef<fabric.Canvas | null>(null)
