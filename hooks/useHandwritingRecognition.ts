@@ -2,7 +2,9 @@
 
 import { useCallback, useState } from 'react'
 import { fabric } from 'fabric'
-import Tesseract from 'tesseract.js'
+// Load Tesseract dynamically on the client to avoid server-side bundling that
+// pulls in native deps like `canvas` which break on Windows/SSR.
+// We import inside the recognize function below.
 
 export interface HandwritingRecognitionInput {
   canvas: fabric.Canvas
@@ -53,6 +55,8 @@ export function useHandwritingRecognition() {
         multiplier: 2,
       })
 
+      // Dynamically import Tesseract at runtime (client-only)
+      const Tesseract = (await import('tesseract.js')).default
       const result = await Tesseract.recognize(dataUrl, language)
       const text = result.data.text.trim()
 
