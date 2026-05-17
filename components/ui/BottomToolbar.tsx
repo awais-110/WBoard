@@ -62,7 +62,7 @@ export default function BottomToolbar({
   }
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-4 z-40 hidden justify-center px-3 md:flex">
+    <div className="pointer-events-none absolute inset-x-0 bottom-4 z-50 hidden justify-center px-3 md:flex">
       <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-white/92 px-2 py-1.5 shadow-[0_16px_40px_rgba(13,13,13,0.08)] backdrop-blur-xl">
         {canEdit && (
           <DockGroup>
@@ -120,6 +120,64 @@ export default function BottomToolbar({
             <Maximize2 size={13} />
           </ZoomBtn>
         </div>
+      </div>
+    </div>
+    {/* Mobile toolbar - visible only on small screens */}
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex flex-row items-center gap-2 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-black/10 px-3 py-2 overflow-x-auto max-w-[90vw] z-50 md:hidden pb-safe">
+      <div className="flex items-center gap-2">
+        {canEdit && (
+          <button onClick={handleSticky} title="Sticky note" className={cn('min-w-[40px] h-10 w-10 flex items-center justify-center rounded-xl text-[#0d0d0d]/70', 'hover:bg-black/[0.05]')}> 
+            <StickyNote size={20} />
+          </button>
+        )}
+
+        {canEdit && (
+          <button onClick={handleEraser} title="Eraser" className={cn('min-w-[40px] h-10 w-10 flex items-center justify-center rounded-xl text-[#0d0d0d]/70', 'hover:bg-black/[0.05]')}> 
+            <Eraser size={20} />
+          </button>
+        )}
+
+        {canEdit && (
+          <button onClick={onUndo} title="Undo" className="min-w-[40px] h-10 w-10 flex items-center justify-center rounded-xl text-[#0d0d0d]/70 hover:bg-black/[0.05]">
+            <RotateCcw size={20} />
+          </button>
+        )}
+
+        {canEdit && (
+          <button onClick={onRedo} title="Redo" className="min-w-[40px] h-10 w-10 flex items-center justify-center rounded-xl text-[#0d0d0d]/70 hover:bg-black/[0.05]">
+            <RotateCw size={20} />
+          </button>
+        )}
+
+        {canEdit && (
+          <button onClick={onDeleteSelected} title="Delete" className="min-w-[40px] h-10 w-10 flex items-center justify-center rounded-xl text-red-500 hover:bg-red-50">
+            <Trash2 size={20} />
+          </button>
+        )}
+
+        {canEdit && (
+          <button onClick={onClear} title="Clear" className="min-w-[40px] h-10 w-10 flex items-center justify-center rounded-xl text-red-500 hover:bg-red-50">
+            <Trash size={20} />
+          </button>
+        )}
+
+        <div className="h-6 w-px bg-black/10 mx-2" />
+
+        <button onClick={handleZoomOut} title="Zoom out" className="min-w-[40px] h-10 w-10 flex items-center justify-center rounded-xl hover:bg-black/[0.05]">
+          <Minus size={20} />
+        </button>
+
+        <button onClick={handleReset} title="Reset zoom" className="min-w-[40px] h-10 w-[58px] flex items-center justify-center rounded-xl px-2 text-sm font-semibold">
+          {Math.round(zoom * 100)}%
+        </button>
+
+        <button onClick={handleZoomIn} title="Zoom in" className="min-w-[40px] h-10 w-10 flex items-center justify-center rounded-xl hover:bg-black/[0.05]">
+          <Plus size={20} />
+        </button>
+
+        <button onClick={handleFit} title="Fit to screen" className="min-w-[40px] h-10 w-10 flex items-center justify-center rounded-xl hover:bg-black/[0.05]">
+          <Maximize2 size={20} />
+        </button>
       </div>
     </div>
   )

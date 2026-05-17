@@ -142,9 +142,9 @@ export default function Canvas({
       className="whiteboard-dot-grid relative h-full w-full touch-none overflow-hidden bg-[#f7f5f0]"
       onMouseMove={handleMouseMove}
     >
-      <canvas ref={canvasRef} className="block" />
+      <canvas ref={canvasRef} className="block z-10" />
 
-      <div className="absolute left-3 top-3 z-30 flex gap-2 rounded-full border border-black/[0.08] bg-white/90 p-1 shadow-lg shadow-black/10 backdrop-blur-sm md:hidden">
+      <div className="absolute left-3 top-3 z-50 flex gap-2 rounded-full border border-black/[0.08] bg-white/90 p-1 shadow-lg shadow-black/10 backdrop-blur-sm md:hidden">
         <ToolButton
           active={activeTool === 'pen'}
           label="Pen"
@@ -160,7 +160,7 @@ export default function Canvas({
       </div>
 
       {isRecognizing && (
-        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-white/45 backdrop-blur-[1px]">
+        <div className="pointer-events-none absolute inset-0 z-100 flex items-center justify-center bg-white/45 backdrop-blur-[1px]">
           <div className="flex items-center gap-3 rounded-full border border-black/[0.08] bg-white px-4 py-3 text-sm font-medium text-[#0d0d0d] shadow-lg shadow-black/10">
             <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#00A198]" />
             Recognizing handwriting
@@ -169,7 +169,7 @@ export default function Canvas({
       )}
 
       {isEmpty && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-5">
+        <div className="pointer-events-none absolute inset-0 z-100 flex items-center justify-center p-5">
           <div className="max-w-[300px] rounded-2xl border border-black/[0.08] bg-white/90 px-6 py-5 text-center shadow-lg shadow-black/[0.06] backdrop-blur-sm">
             <div className="mb-2 text-2xl">✏️</div>
             <p className="text-sm font-semibold text-[#0d0d0d]">Canvas is empty</p>

@@ -56,4 +56,8 @@ canvas {
     background-image: radial-gradient(circle, rgba(15, 15, 15, 0.14) 1px, transparent 1px);
     background-size: 24px 24px;
   }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
 }
