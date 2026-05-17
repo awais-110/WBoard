@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   title: "IdeaSpace - Collaborate, Create, Innovate",
   description: "IdeaSpace is your digital canvas for collaborative creativity. Design, brainstorm, and build amazing things together in real-time.",
   icons: {
-    icon: '/favicon.ico',
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
   },
 };
 
