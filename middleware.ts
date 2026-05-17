@@ -4,8 +4,10 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/callback')
 
-  // Skip middleware for home page and OAuth callback to avoid redirect loops
-  if (request.nextUrl.pathname === '/' || isAuthCallback) {
+  // Skip middleware for home page, dev routes, and OAuth callback to avoid redirect loops
+  const isDevRoute = request.nextUrl.pathname.startsWith('/dev')
+
+  if (request.nextUrl.pathname === '/' || isAuthCallback || isDevRoute) {
     return NextResponse.next({ request: { headers: request.headers } })
   }
 
