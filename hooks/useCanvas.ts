@@ -300,7 +300,6 @@ export function useCanvas({
       }
 
       if (activeTool === 'pen') {
-        enableFreeDraw(canvas, strokeColor, strokeWidth)
         return
       }
 
@@ -348,10 +347,6 @@ export function useCanvas({
       if (!canEdit) return
 
       const state = drawingStateRef.current
-      if (activeTool === 'pen') {
-        disableFreeDraw(canvas)
-      }
-
       if (!state) return
 
       const pointer = canvas.getPointer(opt.e)
