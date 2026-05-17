@@ -117,25 +117,25 @@ export default function TopNavbar({
 
   return (
     <>
-      <div className="flex h-14 w-full items-center justify-between gap-3 border-b border-black/[0.08] bg-[#f7f5f0]/95 px-3 text-[#0d0d0d] sm:px-4">
+      <div className="flex w-full flex-col gap-2 border-b border-black/[0.08] bg-[#f7f5f0]/95 px-3 py-2 text-[#0d0d0d] backdrop-blur-md sm:px-4 md:h-14 md:flex-row md:items-center md:justify-between md:gap-3 md:py-0">
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1 rounded-full border border-black/[0.08] bg-black/[0.04] px-3 py-1.5 text-sm text-[#0d0d0d]/65 transition-all duration-200 hover:bg-black/[0.08] hover:text-[#0d0d0d]"
+            className="inline-flex min-h-11 items-center gap-1 rounded-full border border-black/[0.08] bg-black/[0.04] px-3 py-2 text-sm text-[#0d0d0d]/65 transition-all duration-200 hover:bg-black/[0.08] hover:text-[#0d0d0d]"
           >
             <ChevronLeft size={14} />
-            <span>Workspace</span>
+            <span className="hidden sm:inline">Workspace</span>
           </Link>
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#0d0d0d] text-xs font-semibold text-white shadow-[0_8px_24px_rgba(13,13,13,0.18)]">
             {boardName.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-[15px] font-semibold tracking-tight">{boardName}</div>
-            <div className="text-[11px] text-[#0d0d0d]/45">Pro canvas editor workspace</div>
+            <div className="truncate text-sm font-semibold tracking-tight sm:text-[15px]">{boardName}</div>
+            <div className="text-xs text-[#0d0d0d]/45 sm:text-[11px]">Pro canvas editor workspace</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 rounded-full border border-black/[0.08] bg-white/85 px-1.5 py-1 shadow-[0_10px_30px_rgba(13,13,13,0.06)] backdrop-blur-md">
+        <div className="flex w-full items-center gap-1 overflow-x-auto rounded-full border border-black/[0.08] bg-white/85 px-1.5 py-1 shadow-[0_10px_30px_rgba(13,13,13,0.06)] backdrop-blur-md md:w-auto">
           <NavBtn onClick={onUndo} title="Undo (Ctrl+Z)">
             <RotateCcw size={14} />
           </NavBtn>
@@ -159,12 +159,12 @@ export default function TopNavbar({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
           <div className="relative" ref={presenceMenuRef}>
             <button
               type="button"
               onClick={() => setShowPresenceMenu((value) => !value)}
-              className="inline-flex h-9 items-center gap-2 rounded-full border border-black/[0.08] bg-white/90 px-3 text-xs text-[#0d0d0d]/60 shadow-[0_10px_20px_rgba(13,13,13,0.04)] transition-colors hover:bg-white"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-black/[0.08] bg-white/90 px-3 text-xs text-[#0d0d0d]/60 shadow-[0_10px_20px_rgba(13,13,13,0.04)] transition-colors hover:bg-white"
               title="Collaborators"
             >
               <Users size={13} className="text-[#0d0d0d]/45" />
@@ -249,11 +249,11 @@ export default function TopNavbar({
               </div>
             )}
           </div>
-          <SaveStatus status={status} lastSavedAt={lastSavedAt} error={error} />
+            <SaveStatus status={status} lastSavedAt={lastSavedAt} error={error} />
           {status === 'error' && (
             <button
               onClick={() => window.dispatchEvent(new Event('whiteboard:retry-save'))}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 text-xs font-medium text-red-600 transition-colors hover:bg-red-100"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 text-xs font-medium text-red-600 transition-colors hover:bg-red-100"
             >
               <RotateCcw size={12} /> Retry
             </button>

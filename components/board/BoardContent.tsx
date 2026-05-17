@@ -104,7 +104,7 @@ export default function BoardContent({ board, canEdit, loading }: BoardContentPr
   }, [showLoading])
 
   return (
-    <div className="relative h-[100dvh] overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(10,191,188,0.08),_transparent_28%),linear-gradient(180deg,#faf8f4_0%,#f3efe8_100%)] text-[#0d0d0d]">
+    <div className="relative flex h-[100dvh] flex-col overflow-x-hidden overflow-y-hidden bg-[radial-gradient(circle_at_top,_rgba(10,191,188,0.08),_transparent_28%),linear-gradient(180deg,#faf8f4_0%,#f3efe8_100%)] text-[#0d0d0d]">
       <div className={`absolute inset-0 z-[60] bg-[#f7f5f0] transition-opacity duration-300 ${showOverlay ? 'opacity-100' : 'pointer-events-none opacity-0'}`} aria-hidden>
         <div className="flex h-full items-center justify-center">
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-black/[0.08] bg-white/80 px-6 py-5 shadow-[0_18px_45px_rgba(13,13,13,0.08)] backdrop-blur-sm">
@@ -114,14 +114,14 @@ export default function BoardContent({ board, canEdit, loading }: BoardContentPr
         </div>
       </div>
 
-      <div className="fixed inset-x-0 top-0 z-50 border-b border-black/[0.08] bg-[#f7f5f0]/90 shadow-[0_10px_30px_rgba(13,13,13,0.06)] backdrop-blur-xl">
+      <div className="sticky top-0 z-50 border-b border-black/[0.08] bg-[#f7f5f0]/90 shadow-[0_10px_30px_rgba(13,13,13,0.06)] backdrop-blur-xl">
         <TopNavbar boardName={board.title || 'Board'} boardId={board.id} canEdit={canEdit} onUndo={handleUndo} onRedo={handleRedo} onClear={handleClear} />
       </div>
 
-      <div className="flex h-full min-h-0 pt-14 sm:pt-14">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
         <LeftSidebar />
 
-        <main className="relative min-w-0 flex-1 overflow-hidden p-3 sm:p-4">
+        <main className="relative min-w-0 flex-1 overflow-hidden p-2 sm:p-3 md:p-4">
           <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border border-black/[0.08] bg-white shadow-[0_24px_80px_rgba(13,13,13,0.08)]">
             <div className="relative min-h-0 flex-1 overflow-hidden bg-[#fbfaf7]">
               <Canvas

@@ -40,7 +40,7 @@ export default function LeftSidebar() {
   )
 
   return (
-    <aside className="flex w-[76px] shrink-0 flex-col border-r border-black/[0.08] bg-[#fbfaf7]/90 px-2 py-2.5 backdrop-blur-md">
+    <aside className="hidden w-[76px] shrink-0 flex-col border-r border-black/[0.08] bg-[#fbfaf7]/90 px-2 py-2.5 backdrop-blur-md md:flex">
       <div className="mt-2.5 rounded-[18px] border border-black/[0.08] bg-white/80 p-1.5 shadow-[0_10px_28px_rgba(13,13,13,0.04)]">
         <div className="flex flex-col items-center gap-1">
           {TOOLS.map(({ type, icon: Icon, label, shortcut }) => (

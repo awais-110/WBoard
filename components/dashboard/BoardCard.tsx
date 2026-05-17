@@ -48,13 +48,13 @@ export default function BoardCard({ board, variant = 0, onDelete, loading = fals
 
   if (loading) {
     return (
-      <div className="group block h-full">
-        <article className={`flex h-full flex-col overflow-hidden rounded-[24px] border shadow-[0_18px_45px_rgba(13,13,13,0.06)] ${variantClass} transition duration-300`}>
-          <div className="relative flex h-44 items-center justify-center overflow-hidden bg-[#F7F5F0]">
+      <div className="group block h-full min-w-0">
+        <article className={`flex h-full min-w-0 flex-col overflow-hidden rounded-[24px] border shadow-[0_18px_45px_rgba(13,13,13,0.06)] ${variantClass} transition duration-300`}>
+          <div className="relative flex h-36 items-center justify-center overflow-hidden bg-[#F7F5F0] sm:h-44">
             <Skeleton className="absolute inset-0 rounded-none" />
           </div>
 
-          <div className="flex flex-1 flex-col gap-4 p-5">
+          <div className="flex min-w-0 flex-1 flex-col gap-3 p-4 sm:gap-4 sm:p-5">
             <div className="space-y-3">
               <Skeleton className="h-5 w-3/4 rounded-md" />
               <div className="flex items-center gap-4">
@@ -76,9 +76,9 @@ export default function BoardCard({ board, variant = 0, onDelete, loading = fals
   
 
   return (
-    <Link href={`/dashboard/board/${board!.id}`} className="group block h-full">
-      <article className={`flex h-full flex-col overflow-hidden rounded-[24px] border shadow-[0_18px_45px_rgba(13,13,13,0.06)] transition duration-300 hover:-translate-y-1 hover:border-[#0ABFBC]/45 hover:shadow-[0_28px_60px_rgba(13,13,13,0.10)] ${variantClass}`}>
-        <div className="relative flex h-44 items-center justify-center overflow-hidden bg-[#F7F5F0]">
+    <Link href={`/dashboard/board/${board!.id}`} className="group block h-full min-w-0">
+      <article className={`flex h-full min-w-0 flex-col overflow-hidden rounded-[24px] border shadow-[0_18px_45px_rgba(13,13,13,0.06)] transition duration-300 hover:-translate-y-1 hover:border-[#0ABFBC]/45 hover:shadow-[0_28px_60px_rgba(13,13,13,0.10)] ${variantClass}`}>
+        <div className="relative flex h-36 items-center justify-center overflow-hidden bg-[#F7F5F0] sm:h-44">
           {preview ? (
             <Image src={preview} alt={board!.title} fill sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw" className="object-cover transition duration-300 group-hover:scale-105" unoptimized />
           ) : (
@@ -97,12 +97,12 @@ export default function BoardCard({ board, variant = 0, onDelete, loading = fals
           )}
         </div>
 
-        <div className="flex flex-1 flex-col gap-4 p-5">
-          <div>
-            <h3 className="truncate text-base font-bold text-[#0D0D0D] transition-colors group-hover:text-[#0ABFBC]">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 p-4 sm:gap-4 sm:p-5">
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-bold text-[#0D0D0D] transition-colors group-hover:text-[#0ABFBC] sm:text-base">
               {board!.title}
             </h3>
-            <div className="mt-3 flex items-center gap-4 text-xs text-[#0D0D0D]/55">
+            <div className="mt-2 flex items-center gap-4 text-xs text-[#0D0D0D]/55 sm:mt-3">
               <span className="inline-flex items-center gap-1.5">
                 <Clock3 size={13} />
                 {timeAgo}
@@ -122,7 +122,7 @@ export default function BoardCard({ board, variant = 0, onDelete, loading = fals
                 event.stopPropagation()
                 if (confirm('Delete this board?')) onDelete(board!.id)
               }}
-              className="mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-full border border-[#0D0D0D]/10 bg-[#F7F5F0] px-3 text-sm font-bold text-[#0D0D0D]/70 shadow-sm transition hover:border-rose-300 hover:text-rose-700"
+              className="mt-auto inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-[#0D0D0D]/10 bg-[#F7F5F0] px-3 text-sm font-bold text-[#0D0D0D]/70 shadow-sm transition hover:border-rose-300 hover:text-rose-700"
             >
               <Trash2 size={14} />
               Delete

@@ -161,7 +161,7 @@ export default function RightSidebar({ fabricRef, isCollapsed, onToggleCollapse 
       <button
         type="button"
         onClick={onToggleCollapse}
-        className="fixed right-0 top-1/2 z-40 flex -translate-y-1/2 items-center justify-center rounded-l-2xl border border-r-0 border-black/[0.08] bg-white/90 px-1.5 py-4 text-[#0d0d0d]/50 shadow-[0_14px_30px_rgba(13,13,13,0.08)] backdrop-blur-md hover:text-[#0d0d0d]"
+        className="hidden md:flex fixed right-0 top-1/2 z-40 -translate-y-1/2 items-center justify-center rounded-l-2xl border border-r-0 border-black/[0.08] bg-white/90 px-1.5 py-4 text-[#0d0d0d]/50 shadow-[0_14px_30px_rgba(13,13,13,0.08)] backdrop-blur-md hover:text-[#0d0d0d]"
       >
         <ChevronRight size={14} />
       </button>
@@ -169,7 +169,7 @@ export default function RightSidebar({ fabricRef, isCollapsed, onToggleCollapse 
   }
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-l border-black/[0.08] bg-[#fbfaf7]/90 backdrop-blur-md">
+    <aside className="hidden w-72 shrink-0 flex-col overflow-hidden border-l border-black/[0.08] bg-[#fbfaf7]/90 backdrop-blur-md md:flex">
       <div className="flex items-center justify-between border-b border-black/[0.08] px-3 py-3">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0abfbc]/15 text-[#0abfbc] shadow-sm">

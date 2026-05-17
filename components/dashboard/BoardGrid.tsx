@@ -41,7 +41,7 @@ export default function BoardGrid({
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <BoardCard key={`skeleton-${i}`} loading variant={i} />
         ))}
@@ -51,16 +51,16 @@ export default function BoardGrid({
 
   if (boards.length === 0) {
     return (
-      <div className="rounded-[24px] border border-dashed border-[#0D0D0D]/15 bg-white/55 px-6 py-12 text-center shadow-[0_18px_45px_rgba(13,13,13,0.05)]">
+      <div className="rounded-[24px] border border-dashed border-[#0D0D0D]/15 bg-white/55 px-4 py-10 text-center shadow-[0_18px_45px_rgba(13,13,13,0.05)] sm:px-6 sm:py-12">
         <div className="mx-auto h-14 w-20 rounded-2xl border border-[#0D0D0D]/10 bg-[#F7F5F0] shadow-sm" />
-        <h2 className="mt-4 font-serif text-2xl font-semibold text-[#0D0D0D]">{emptyTitle}</h2>
+        <h2 className="mt-4 font-serif text-xl font-semibold text-[#0D0D0D] sm:text-2xl">{emptyTitle}</h2>
         <p className="mt-1 text-sm text-[#0D0D0D]/55">{emptyDescription}</p>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
       {boards.map((board, index) => (
         <BoardCard
           key={board.id}

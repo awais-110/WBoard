@@ -62,7 +62,7 @@ export default function BottomToolbar({
   }
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-4 z-40 flex justify-center px-3">
+    <div className="pointer-events-none absolute inset-x-0 bottom-4 z-40 hidden justify-center px-3 md:flex">
       <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-white/92 px-2 py-1.5 shadow-[0_16px_40px_rgba(13,13,13,0.08)] backdrop-blur-xl">
         {canEdit && (
           <DockGroup>

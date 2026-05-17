@@ -55,7 +55,7 @@ export default function DashboardNavbar() {
 
   return (
     <div className="sticky top-0 z-30 border-b border-[#0D0D0D]/10 bg-[#F7F5F0]/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-5">
         <Link href="/dashboard" className="flex min-w-0 items-center gap-3 text-[#0D0D0D]">
           <div className="grid h-[38px] w-[38px] place-items-center rounded-[10px] border border-black/10 bg-[#0D0D0D] shadow-sm">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -67,15 +67,15 @@ export default function DashboardNavbar() {
           </div>
           <div className="grid min-w-0 leading-none">
             <span className="truncate text-[18px] font-semibold tracking-tight sm:text-[22px]">IdeaSpace</span>
-            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0D0D0D]/60">Workspace</span>
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#0D0D0D]/60">Workspace</span>
           </div>
         </Link>
 
-        <div className="relative flex min-w-0 items-center gap-3" ref={menuRef}>
+        <div className="relative flex min-w-0 items-center justify-between gap-3 sm:justify-end" ref={menuRef}>
           <button
             type="button"
             onClick={() => setMenuOpen((open) => !open)}
-            className="group inline-flex min-w-0 items-center gap-2 rounded-full border border-[#0D0D0D]/10 bg-white/75 px-2 py-2 text-[#0D0D0D] shadow-[0_18px_45px_rgba(13,13,13,0.08)] transition hover:border-[#0ABFBC]/40 sm:gap-3 sm:px-3"
+            className="group inline-flex min-h-11 min-w-0 items-center gap-2 rounded-full border border-[#0D0D0D]/10 bg-white/75 px-2 py-2 text-[#0D0D0D] shadow-[0_18px_45px_rgba(13,13,13,0.08)] transition hover:border-[#0ABFBC]/40 sm:gap-3 sm:px-3"
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0ABFBC] text-white shadow-lg shadow-[#0ABFBC]/20 sm:h-10 sm:w-10">
               <span className="text-sm font-bold">{user?.full_name?.charAt(0).toUpperCase() ?? '?'}</span>

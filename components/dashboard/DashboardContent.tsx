@@ -40,20 +40,20 @@ export default function DashboardContent({ boards, sharedBoards = [] }: Dashboar
     .slice(0, 3)
 
   return (
-    <div className="min-h-screen bg-[#F7F5F0] text-[#0D0D0D]">
+    <div className="min-h-screen overflow-x-hidden bg-[#F7F5F0] text-[#0D0D0D]">
       <header className="border-b border-[#0D0D0D]/10 bg-[#F7F5F0]">
-        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-2xl space-y-3">
+        <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-2xl space-y-2 sm:space-y-3">
               <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.28em] text-[#0ABFBC]">
                 <Sparkles size={14} />
                 Workspace
               </div>
               <div>
-                <p className="text-2xl font-bold tracking-tight text-[#0D0D0D] md:text-3xl">
+                <p className="text-xl font-bold tracking-tight text-[#0D0D0D] sm:text-2xl md:text-3xl">
                   Your workspace
                 </p>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-[#0D0D0D]/60">
+                <p className="mt-2 max-w-xl text-sm leading-6 text-[#0D0D0D]/60 sm:text-base">
                   Keep active work visible, open a board fast, and create polished spaces for every idea in motion.
                 </p>
               </div>
@@ -76,7 +76,7 @@ export default function DashboardContent({ boards, sharedBoards = [] }: Dashboar
               <div className="inline-flex flex-wrap gap-3">
                 <button
                   onClick={() => setShowNewModal(true)}
-                  className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#0D0D0D] px-5 text-sm font-bold text-white shadow-[0_14px_28px_rgba(13,13,13,0.16)] transition hover:-translate-y-0.5 hover:bg-[#0ABFBC] sm:w-auto"
+                  className="group inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[#0D0D0D] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_28px_rgba(13,13,13,0.16)] transition hover:-translate-y-0.5 hover:bg-[#0ABFBC] sm:w-auto"
                 >
                   <Plus size={18} className="group-hover:rotate-90 transition duration-300" />
                   New Board
@@ -85,8 +85,8 @@ export default function DashboardContent({ boards, sharedBoards = [] }: Dashboar
             </div>
           </div>
 
-          <div className="mt-7 grid gap-4 md:grid-cols-[2fr_1fr]">
-            <div className="group rounded-[24px] border border-[#0D0D0D]/10 bg-white/65 p-4 shadow-[0_18px_45px_rgba(13,13,13,0.06)]">
+          <div className="mt-6 grid gap-3 md:mt-7 md:grid-cols-[2fr_1fr] md:gap-4">
+            <div className="group rounded-[24px] border border-[#0D0D0D]/10 bg-white/65 p-3 shadow-[0_18px_45px_rgba(13,13,13,0.06)] sm:p-4">
               <div className="flex items-center gap-3 rounded-full border border-[#0D0D0D]/10 bg-[#F7F5F0] px-4 py-3">
                 <Search size={18} className="text-[#0ABFBC]" />
                 <input
@@ -98,7 +98,7 @@ export default function DashboardContent({ boards, sharedBoards = [] }: Dashboar
                 />
               </div>
             </div>
-            <div className="rounded-[24px] border border-[#0D0D0D]/10 bg-white/65 p-4 shadow-[0_18px_45px_rgba(13,13,13,0.06)]">
+            <div className="rounded-[24px] border border-[#0D0D0D]/10 bg-white/65 p-3 shadow-[0_18px_45px_rgba(13,13,13,0.06)] sm:p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-[#0D0D0D]">
                   <Filter size={18} />
@@ -123,10 +123,10 @@ export default function DashboardContent({ boards, sharedBoards = [] }: Dashboar
             </div>
           </div>
 
-          <section className="mt-6 rounded-[24px] border border-[#0D0D0D]/10 bg-white/55 p-6 shadow-[0_18px_45px_rgba(13,13,13,0.05)]">
+          <section className="mt-5 rounded-[24px] border border-[#0D0D0D]/10 bg-white/55 p-4 shadow-[0_18px_45px_rgba(13,13,13,0.05)] sm:mt-6 sm:p-6">
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="font-bold text-[#0D0D0D]">Recent activity</p>
+                <p className="text-sm font-bold text-[#0D0D0D] sm:text-base">Recent activity</p>
                 <p className="mt-1 text-sm text-[#0D0D0D]/60">Your most recently opened or updated boards.</p>
               </div>
               <span className="rounded-full border border-[#0ABFBC]/25 bg-[#0ABFBC]/10 px-3 py-1 text-xs font-bold text-[#0ABFBC]">
@@ -134,15 +134,15 @@ export default function DashboardContent({ boards, sharedBoards = [] }: Dashboar
               </span>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {recentBoards.length > 0 ? (
                 recentBoards.map((board) => (
                   <Link
                     key={board.id}
                     href={`/dashboard/board/${board.id}`}
-                    className="group block rounded-2xl border border-[#0D0D0D]/10 bg-[#F7F5F0]/70 p-4 shadow-sm transition hover:border-[#0ABFBC]/40 hover:bg-white"
+                    className="group block rounded-2xl border border-[#0D0D0D]/10 bg-[#F7F5F0]/70 p-3 shadow-sm transition hover:border-[#0ABFBC]/40 hover:bg-white sm:p-4"
                   >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-bold text-[#0D0D0D] group-hover:text-[#0ABFBC]">{board.title}</p>
                         <p className="mt-1 text-xs text-[#0D0D0D]/55">
@@ -163,7 +163,7 @@ export default function DashboardContent({ boards, sharedBoards = [] }: Dashboar
             </div>
           </section>
 
-          <div className="mt-6 space-y-8">
+          <div className="mt-6 space-y-6 sm:space-y-8">
             <section>
               <SectionHeader
                 title="Owned by me"
@@ -195,9 +195,9 @@ export default function DashboardContent({ boards, sharedBoards = [] }: Dashboar
 
 function SectionHeader({ title, description, count }: { title: string; description: string; count: number }) {
   return (
-    <div className="mb-6 flex items-end justify-between gap-4">
+    <div className="mb-4 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
       <div>
-        <h2 className="font-serif text-3xl font-semibold text-[#0D0D0D]">{title}</h2>
+        <h2 className="font-serif text-xl font-semibold text-[#0D0D0D] sm:text-2xl md:text-3xl">{title}</h2>
         <p className="mt-1 text-sm text-[#0D0D0D]/55">{description}</p>
       </div>
       <span className="shrink-0 rounded-full border border-[#0D0D0D]/10 bg-white/60 px-3 py-1.5 text-xs font-bold text-[#0D0D0D]/70 shadow-sm sm:px-4">
