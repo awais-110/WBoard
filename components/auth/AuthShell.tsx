@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Script from 'next/script'
 import { createClient } from '@/lib/supabase/client'
 import LandingNavbar from '@/components/landing/LandingNavbar'
-import { Turnstile } from '@marsidev/react-turnstile'
+import { DEFAULT_SCRIPT_ID, SCRIPT_URL, Turnstile } from '@marsidev/react-turnstile'
 
 type AuthMode = 'login' | 'register'
 
@@ -38,10 +39,10 @@ const evaluatePasswordStrength = (password: string) => {
   if (/\d/.test(password)) score += 1
   if (/[^A-Za-z\d]/.test(password)) score += 1
 
-  if (score <= 1) return { level: 1, label: 'Weak', color: '#E24B4A' }
-  if (score === 2) return { level: 2, label: 'Fair', color: '#EF9F27' }
-  if (score === 3) return { level: 3, label: 'Strong', color: '#0ABFBC' }
-  return { level: 4, label: 'Excellent', color: '#63C422' }
+  if (score <= 1) return { level: 1, label: 'Weak', color: '#f70000' }
+  if (score === 2) return { level: 2, label: 'Fair', color: '#f09917' }
+  if (score === 3) return { level: 3, label: 'Strong', color: '#08cac7' }
+  return { level: 4, label: 'Excellent', color: '#10d34b' }
 }
 
 const validateField = (name: keyof FieldState, value: string, fields: FieldState) => {
@@ -332,6 +333,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
 
   return (
     <div className="auth-shell">
+      {siteKey ? <Script id={DEFAULT_SCRIPT_ID} src={SCRIPT_URL} strategy="afterInteractive" /> : null}
       <div className="auth-grid">
         <LandingNavbar />
 
@@ -502,6 +504,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
                     <Turnstile
                       ref={turnstileRef}
                       siteKey={siteKey}
+                      injectScript={false}
                       onSuccess={(token) => setTurnstileToken(token)}
                       onExpire={() => setTurnstileToken(null)}
                       onError={() => setTurnstileToken(null)}

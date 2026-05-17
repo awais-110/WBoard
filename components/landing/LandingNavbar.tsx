@@ -8,15 +8,15 @@ export default function LandingNavbar() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-50 border-b border-black/8 bg-[#f7f5f0]/92 backdrop-blur-xl">
+    <nav className="fixed inset-x-0 top-0 z-50 border-b border-black/15 bg-[#f7f5f0]/92 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 md:px-8 md:py-5">
         <Link href="/" className="flex min-w-0 items-center gap-3">
           <div className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[10px] border border-black/10 bg-[#0D0D0D]">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="2" width="6" height="6" rx="1.5" fill="#0ABFBC" />
-              <rect x="10" y="2" width="6" height="6" rx="1.5" fill="#F59E0B" />
-              <rect x="2" y="10" width="6" height="6" rx="1.5" fill="#8B5CF6" />
-              <rect x="10" y="10" width="6" height="6" rx="1.5" fill="#EC4899" />
+              <rect x="2" y="2" width="6" height="6" rx="1.5" fill="#00fffb" />
+              <rect x="10" y="2" width="6" height="6" rx="1.5" fill="#ffa200" />
+              <rect x="2" y="10" width="6" height="6" rx="1.5" fill="#4d04f8" />
+              <rect x="10" y="10" width="6" height="6" rx="1.5" fill="#ff0080" />
             </svg>
           </div>
           <div className="grid min-w-0 leading-none">
