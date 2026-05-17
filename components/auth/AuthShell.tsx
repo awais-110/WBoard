@@ -104,7 +104,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
   const [serverError, setServerError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [shake, setShake] = useState(false)
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [captchaToken, setCaptchaToken] = useState('')
   const turnstileRef = useRef<any>(null)
 
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
@@ -143,7 +143,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
     setServerError('')
     setSuccessMessage('')
     setStatus('idle')
-    setTurnstileToken(null)
+    setCaptchaToken('')
     setFields({ fullName: '', email: '', password: '', confirmPassword: '' })
     setErrors({ fullName: '', email: '', password: '', confirmPassword: '' })
     setTouched({ fullName: false, email: false, password: false, confirmPassword: false })
@@ -246,7 +246,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
       return
     }
 
-    if (siteKey && !turnstileToken) {
+    if (siteKey && !captchaToken) {
       setServerError('Please complete the security check')
       setShake(true)
       return
@@ -265,7 +265,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
             name: fields.fullName.trim(),
             email: fields.email.trim(),
             password: fields.password,
-            turnstileToken,
+            turnstileToken: captchaToken,
           }),
         })
         const payload = await response.json()
@@ -276,7 +276,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
         setFields({ fullName: '', email: fields.email, password: '', confirmPassword: '' })
         setTouched({ fullName: false, email: false, password: false, confirmPassword: false })
         setStatus('idle')
-        setTurnstileToken(null)
+        setCaptchaToken('')
         setSuccessMessage(payload.message || 'Check your email to verify account')
         router.push('/login?registered=true')
         return
@@ -285,6 +285,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
       const { error } = await supabase.auth.signInWithPassword({
         email: fields.email.trim(),
         password: fields.password,
+        options: siteKey ? { captchaToken } : undefined,
       })
 
       if (error) {
@@ -302,7 +303,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
       setServerError(message)
       setStatus('error')
       turnstileRef.current?.reset()
-      setTurnstileToken(null)
+      setCaptchaToken('')
     }
   }
 
@@ -505,9 +506,9 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
                       ref={turnstileRef}
                       siteKey={siteKey}
                       injectScript={false}
-                      onSuccess={(token) => setTurnstileToken(token)}
-                      onExpire={() => setTurnstileToken(null)}
-                      onError={() => setTurnstileToken(null)}
+                      onSuccess={(token) => setCaptchaToken(token)}
+                      onExpire={() => setCaptchaToken('')}
+                      onError={() => setCaptchaToken('')}
                     />
                   </div>
                 </div>
@@ -516,7 +517,7 @@ const AuthShell = ({ initialMode }: AuthShellProps) => {
               <button
                 type="submit"
                 className={`submit-button ${canSubmit ? 'active' : 'disabled'} ${status === 'success' ? 'success' : ''}`}
-                disabled={!canSubmit || status === 'submitting' || status === 'success' || (!!siteKey && !turnstileToken)}
+                disabled={!canSubmit || status === 'submitting' || status === 'success' || (!!siteKey && !captchaToken)}
               >
                 {status === 'submitting'
                   ? mode === 'login'
