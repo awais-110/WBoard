@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-page-custom-font */
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import ScrollToHash from '@/components/ScrollToHash'
@@ -27,13 +26,11 @@ export default function RootLayout({
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <style>{`html { visibility: hidden; opacity: 0; transition: opacity 0.2s ease; }`}</style>
       </head>
       <body className="antialiased">
         {children}
         <ScrollToHash />
         <Toaster position="top-right" />
-        <Script src="/fouc-fix.js" strategy="beforeInteractive" />
       </body>
     </html>
   );
